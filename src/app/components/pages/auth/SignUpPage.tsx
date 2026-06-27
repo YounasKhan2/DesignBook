@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { BookOpen, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "../../../hooks/useAuth";
 
 type FormErrors = Partial<Record<"fullName" | "businessName" | "email" | "password" | "confirmPassword", string>>;
 
@@ -20,6 +21,7 @@ function inputCls(hasError?: boolean) {
 
 export default function SignUpPage() {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [form, setForm] = useState({
     fullName: "",
     businessName: "",
@@ -64,10 +66,27 @@ export default function SignUpPage() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    toast.success("Account created! Welcome to DesignBook.");
-    navigate("/app");
+    try {
+      const result = await signUp({
+        ownerName: form.fullName.trim(),
+        businessName: form.businessName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+      });
+
+      if (result.needsEmailConfirmation) {
+        toast.success("Account created. Please check your email to confirm your account.");
+        navigate("/login");
+      } else {
+        toast.success("Account created! Welcome to DesignBook.");
+        navigate("/app");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to create your account. Please try again.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

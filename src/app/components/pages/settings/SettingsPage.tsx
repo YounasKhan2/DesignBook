@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { User, Mail, Building2, Lock, Smartphone, Eye, EyeOff, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmDialog from "../../shared/ConfirmDialog";
+import { useAuth } from "../../../hooks/useAuth";
+import { requireSupabase } from "../../../lib/supabase";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { profile: authProfile, user, signOut, refreshProfile } = useAuth();
 
   const [profile, setProfile] = useState({
-    ownerName: "Mohammed Al Rashidi",
-    businessName: "Al Barsha Textiles LLC",
-    email: "m.rashidi@albarsha.ae",
+    ownerName: "",
+    businessName: "",
+    email: "",
   });
 
   const [passwords, setPasswords] = useState({
@@ -25,6 +28,18 @@ export default function SettingsPage() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "password" | "pwa">("profile");
 
+  useEffect(() => {
+    setProfile({
+      ownerName:
+        authProfile?.owner_name ??
+        String(user?.user_metadata?.owner_name ?? user?.user_metadata?.ownerName ?? ""),
+      businessName:
+        authProfile?.business_name ??
+        String(user?.user_metadata?.business_name ?? user?.user_metadata?.businessName ?? ""),
+      email: authProfile?.email ?? user?.email ?? "",
+    });
+  }, [authProfile, user]);
+
   const setP = (key: keyof typeof profile) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setProfile((prev) => ({ ...prev, [key]: e.target.value }));
 
@@ -37,9 +52,34 @@ export default function SettingsPage() {
       return;
     }
     setSavingProfile(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setSavingProfile(false);
-    toast.success("Profile saved successfully.");
+    try {
+      const client = requireSupabase();
+      const { error } = await client
+        .from("profiles")
+        .update({
+          owner_name: profile.ownerName.trim(),
+          business_name: profile.businessName.trim(),
+          email: profile.email.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user?.id);
+
+      if (error) throw error;
+
+      await client.auth.updateUser({
+        data: {
+          owner_name: profile.ownerName.trim(),
+          business_name: profile.businessName.trim(),
+        },
+      });
+      await refreshProfile();
+      toast.success("Profile saved successfully.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to save profile. Please try again.";
+      toast.error(message);
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const savePassword = async () => {
@@ -56,15 +96,29 @@ export default function SettingsPage() {
       return;
     }
     setSavingPass(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setSavingPass(false);
-    setPasswords({ current: "", newPass: "", confirm: "" });
-    toast.success("Password changed successfully.");
+    try {
+      const client = requireSupabase();
+      const { error } = await client.auth.updateUser({ password: passwords.newPass });
+      if (error) throw error;
+      setPasswords({ current: "", newPass: "", confirm: "" });
+      toast.success("Password changed successfully.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to change password. Please try again.";
+      toast.error(message);
+    } finally {
+      setSavingPass(false);
+    }
   };
 
-  const handleSignOut = () => {
-    toast.success("Signed out. See you soon!");
-    navigate("/");
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out. See you soon!");
+      navigate("/login");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to sign out. Please try again.";
+      toast.error(message);
+    }
   };
 
   const TABS = [

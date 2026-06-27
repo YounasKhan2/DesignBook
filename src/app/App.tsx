@@ -1,5 +1,6 @@
-import { createBrowserRouter, RouterProvider, Outlet } from "react-router";
+import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation } from "react-router";
 import { Toaster } from "./components/ui/sonner";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { StoreProvider } from "./hooks/useStore";
 
 import LandingPage from "./components/pages/landing/LandingPage";
@@ -23,20 +24,53 @@ function PublicLayout() {
   return <Outlet />;
 }
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#f4f6f9]" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="text-center">
+        <div className="w-10 h-10 rounded-xl mx-auto mb-3 animate-pulse" style={{ backgroundColor: "#1a3461" }} />
+        <p className="text-sm text-gray-500">Checking your session...</p>
+      </div>
+    </div>
+  );
+}
+
+function ProtectedRoute() {
+  const { session, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <LoadingScreen />;
+  if (!session) return <Navigate to="/login" replace state={{ from: location }} />;
+  return <AppShell />;
+}
+
+function GuestRoute() {
+  const { session, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+  if (session) return <Navigate to="/app" replace />;
+  return <Outlet />;
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
     Component: PublicLayout,
     children: [
       { index: true, Component: LandingPage },
-      { path: "login", Component: LoginPage },
-      { path: "signup", Component: SignUpPage },
+      {
+        Component: GuestRoute,
+        children: [
+          { path: "login", Component: LoginPage },
+          { path: "signup", Component: SignUpPage },
+        ],
+      },
       { path: "forgot-password", Component: ForgotPasswordPage },
     ],
   },
   {
     path: "/app",
-    Component: AppShell,
+    Component: ProtectedRoute,
     children: [
       { index: true, Component: DashboardPage },
       { path: "designs", Component: DesignsGalleryPage },
@@ -55,9 +89,11 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <StoreProvider>
-      <RouterProvider router={router} />
-      <Toaster position="top-right" richColors />
-    </StoreProvider>
+    <AuthProvider>
+      <StoreProvider>
+        <RouterProvider router={router} />
+        <Toaster position="top-right" richColors />
+      </StoreProvider>
+    </AuthProvider>
   );
 }

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import { Layers, Building2, Droplets, Plus } from "lucide-react";
 import { useStore } from "../../../hooks/useStore";
+import { useAuth } from "../../../hooks/useAuth";
 import SearchBar from "../../shared/SearchBar";
 import DesignCard from "../../shared/DesignCard";
 
@@ -36,6 +37,11 @@ function StatCard({ label, value, icon: Icon, accent, to }: StatCardProps) {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { designs, companies, dyes, getCompanyById } = useStore();
+  const { profile, user } = useAuth();
+  const firstName = (
+    profile?.owner_name ??
+    String(user?.user_metadata?.owner_name ?? user?.user_metadata?.ownerName ?? "Owner")
+  ).trim().split(/\s+/)[0];
 
   const recentDesigns = designs.slice(0, 6);
   const today = new Date().toLocaleDateString("en-AE", {
@@ -57,7 +63,7 @@ export default function DashboardPage() {
       <div className="mb-6">
         <p className="text-xs text-gray-400 mb-0.5 leading-snug">{today}</p>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-          Good day, Mohammed{" "}
+          Good day, {firstName || "Owner"}{" "}
           <span>👋</span>
         </h1>
         <p className="text-gray-500 text-sm mt-0.5">Here's your design workspace at a glance.</p>

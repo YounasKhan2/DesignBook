@@ -1,9 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Edit, Trash2, Phone, User, FileText, ChevronLeft, Building2 } from "lucide-react";
 import { toast } from "sonner";
-import { useStore } from "../../../hooks/useStore";
-import DesignCard from "../../shared/DesignCard";
 import ConfirmDialog from "../../shared/ConfirmDialog";
 import EmptyState from "../../shared/EmptyState";
 import { Layers } from "lucide-react";
@@ -13,6 +11,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../ui/dialog";
+import type { Company } from "../../../types";
+import {
+  deleteCompany,
+  getCompanyById,
+  getCompanyErrorMessage,
+  listCompanies,
+  updateCompany,
+} from "../../../services/companiesService";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -30,21 +36,57 @@ function inputCls(hasError?: boolean) {
 export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCompanyById, getDesignsByCompany, deleteCompany, updateCompany, companies } = useStore();
+  const [company, setCompany] = useState<Company | null>(null);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editErrors, setEditErrors] = useState<Partial<Record<"companyName" | "companyNumber", string>>>({});
 
-  const company = getCompanyById(id ?? "");
-  const designs = getDesignsByCompany(id ?? "");
-
   const [editForm, setEditForm] = useState({
-    companyName: company?.companyName ?? "",
-    companyNumber: company?.companyNumber ?? "",
-    contactPerson: company?.contactPerson ?? "",
-    phone: company?.phone ?? "",
-    notes: company?.notes ?? "",
+    companyName: "",
+    companyNumber: "",
+    contactPerson: "",
+    phone: "",
+    notes: "",
   });
+
+  const loadCompany = async () => {
+    if (!id) {
+      setCompany(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const [nextCompany, nextCompanies] = await Promise.all([
+        getCompanyById(id),
+        listCompanies(),
+      ]);
+      setCompany(nextCompany);
+      setCompanies(nextCompanies);
+    } catch (error) {
+      toast.error(getCompanyErrorMessage(error));
+      setCompany(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCompany();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="p-5 md:p-8 max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
+          <p className="text-sm text-gray-500">Loading company...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!company) {
     return (
@@ -64,13 +106,17 @@ export default function CompanyDetailPage() {
 
   const initials = company.companyName.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
-  const handleDelete = () => {
-    deleteCompany(company.id);
-    toast.success("Company deleted.");
-    navigate("/app/companies");
+  const handleDelete = async () => {
+    try {
+      await deleteCompany(company.id);
+      toast.success("Company deleted.");
+      navigate("/app/companies");
+    } catch (error) {
+      toast.error(getCompanyErrorMessage(error));
+    }
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     const e: typeof editErrors = {};
     if (!editForm.companyName.trim()) e.companyName = "Company name is required.";
     if (!editForm.companyNumber.trim()) {
@@ -81,10 +127,16 @@ export default function CompanyDetailPage() {
       if (dup) e.companyNumber = `Company number "${editForm.companyNumber.trim()}" is already used. Choose a different number.`;
     }
     if (Object.keys(e).length) { setEditErrors(e); return; }
-    updateCompany(company.id, editForm);
-    setShowEdit(false);
-    setEditErrors({});
-    toast.success("Company updated.");
+    try {
+      const updated = await updateCompany(company.id, editForm);
+      setCompany(updated);
+      setCompanies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      setShowEdit(false);
+      setEditErrors({});
+      toast.success("Company updated.");
+    } catch (error) {
+      toast.error(getCompanyErrorMessage(error));
+    }
   };
 
   const setEdit = (key: keyof typeof editForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -174,21 +226,13 @@ export default function CompanyDetailPage() {
       {/* Linked Designs */}
       <div>
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
-          Designs ({designs.length})
+          Designs
         </h2>
-        {designs.length === 0 ? (
-          <EmptyState
-            icon={Layers}
-            title="No designs for this company"
-            description="Add a design and link it to this company."
-          />
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {designs.map((d) => (
-              <DesignCard key={d.id} design={d} />
-            ))}
-          </div>
-        )}
+        <EmptyState
+          icon={Layers}
+          title="Linked designs will appear here after designs are connected."
+          description="Companies are now connected to Supabase. Designs will be connected in a later migration phase."
+        />
       </div>
 
       {/* Edit Dialog */}

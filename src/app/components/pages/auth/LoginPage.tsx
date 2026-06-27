@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { BookOpen, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "../../../hooks/useAuth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -17,10 +19,16 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-    toast.success("Welcome back!");
-    navigate("/app");
+    try {
+      await signIn(email.trim(), password);
+      toast.success("Welcome back!");
+      navigate("/app");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to sign in. Please try again.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

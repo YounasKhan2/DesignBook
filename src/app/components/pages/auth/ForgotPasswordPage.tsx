@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { BookOpen, ArrowLeft, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "../../../hooks/useAuth";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const { resetPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -16,10 +18,16 @@ export default function ForgotPasswordPage() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-    setSent(true);
-    toast.success("Reset link sent to your email.");
+    try {
+      await resetPassword(email.trim());
+      setSent(true);
+      toast.success("Reset link sent to your email.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to send reset link. Please try again.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

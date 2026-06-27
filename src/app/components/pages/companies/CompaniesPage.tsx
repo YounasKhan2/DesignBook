@@ -1,8 +1,6 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Building2 } from "lucide-react";
 import { toast } from "sonner";
-import { useStore } from "../../../hooks/useStore";
 import CompanyCard from "../../shared/CompanyCard";
 import EmptyState from "../../shared/EmptyState";
 import {
@@ -12,6 +10,12 @@ import {
   DialogTitle,
 } from "../../ui/dialog";
 import type { Company } from "../../../types";
+import {
+  createCompany,
+  getCompanyErrorMessage,
+  listCompanies,
+  type CompanyInput,
+} from "../../../services/companiesService";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -34,7 +38,7 @@ function CompanyForm({
 }: {
   existingCompanies: Company[];
   excludeId?: string;
-  onSave: (data: { companyName: string; companyNumber: string; contactPerson: string; phone: string; notes: string }) => void;
+  onSave: (data: CompanyInput) => void;
   onCancel: () => void;
 }) {
   const [form, setForm] = useState({ companyName: "", companyNumber: "", contactPerson: "", phone: "", notes: "" });
@@ -110,10 +114,25 @@ function CompanyForm({
 }
 
 export default function CompaniesPage() {
-  const { companies, addCompany, getDesignsByCompany } = useStore();
-  const navigate = useNavigate();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+
+  const loadCompanies = async () => {
+    setLoading(true);
+    try {
+      setCompanies(await listCompanies());
+    } catch (error) {
+      toast.error(getCompanyErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCompanies();
+  }, []);
 
   const filtered = useMemo(
     () => companies.filter(
@@ -152,7 +171,11 @@ export default function CompaniesPage() {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
+          <p className="text-sm text-gray-500">Loading companies...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={Building2}
           title={search ? "No companies found" : "No companies yet"}
@@ -176,7 +199,7 @@ export default function CompaniesPage() {
             <CompanyCard
               key={company.id}
               company={company}
-              designCount={getDesignsByCompany(company.id).length}
+              designCount={0}
             />
           ))}
         </div>
@@ -189,10 +212,15 @@ export default function CompaniesPage() {
           </DialogHeader>
           <CompanyForm
             existingCompanies={companies}
-            onSave={(data) => {
-              addCompany(data);
-              setShowAdd(false);
-              toast.success("Company added.");
+            onSave={async (data) => {
+              try {
+                await createCompany(data);
+                setShowAdd(false);
+                await loadCompanies();
+                toast.success("Company added.");
+              } catch (error) {
+                toast.error(getCompanyErrorMessage(error));
+              }
             }}
             onCancel={() => setShowAdd(false)}
           />

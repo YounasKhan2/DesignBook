@@ -10,6 +10,8 @@ import {
   BookOpen,
 } from "lucide-react";
 import { cn } from "../ui/utils";
+import { useAuth } from "../../hooks/useAuth";
+import { toast } from "sonner";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/app" },
@@ -22,6 +24,22 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const { profile, user, signOut } = useAuth();
+  const ownerName =
+    profile?.owner_name ??
+    String(user?.user_metadata?.owner_name ?? user?.user_metadata?.ownerName ?? "Owner");
+  const initial = ownerName.trim().charAt(0).toUpperCase() || "O";
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out. See you soon!");
+      navigate("/login");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to sign out. Please try again.";
+      toast.error(message);
+    }
+  };
 
   return (
     <aside className="hidden md:flex fixed left-0 top-0 h-full w-60 flex-col z-30"
@@ -65,15 +83,15 @@ export default function Sidebar() {
         <div className="flex items-center gap-3 px-3 py-2 mb-1">
           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
             style={{ backgroundColor: "#10b981" }}>
-            M
+            {initial}
           </div>
           <div className="min-w-0">
-            <p className="text-white text-sm font-medium truncate">Mohammed</p>
+            <p className="text-white text-sm font-medium truncate">{ownerName}</p>
             <p className="text-white/50 text-xs truncate">Owner</p>
           </div>
         </div>
         <button
-          onClick={() => navigate("/")}
+          onClick={handleSignOut}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/8 w-full transition-all"
         >
           <LogOut className="w-4 h-4" />
