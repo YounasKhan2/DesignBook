@@ -1,0 +1,288 @@
+import type { Company, Design, Dye } from "../types";
+
+export const MOCK_COMPANIES: Company[] = [
+  {
+    id: "c1",
+    companyName: "Al Barsha Textiles LLC",
+    companyNumber: "CO-001",
+    contactPerson: "Mohammed Al Rashidi",
+    phone: "+971-4-347-2100",
+    notes: "Premium abaya manufacturer. Specializes in luxury evening wear.",
+    createdAt: "2024-01-10",
+    updatedAt: "2024-01-10",
+  },
+  {
+    id: "c2",
+    companyName: "Gulf Uniform Solutions",
+    companyNumber: "CO-002",
+    contactPerson: "Priya Nair",
+    phone: "+971-4-887-5500",
+    notes: "Hospitality and hotel uniforms across Dubai.",
+    createdAt: "2024-01-15",
+    updatedAt: "2024-01-15",
+  },
+  {
+    id: "c3",
+    companyName: "Madinat Fashion House",
+    companyNumber: "CO-003",
+    contactPerson: "Fatima Al Suwaidi",
+    phone: "+971-4-368-9900",
+    notes: "Ready-to-wear collections for the GCC market.",
+    createdAt: "2024-02-01",
+    updatedAt: "2024-02-01",
+  },
+  {
+    id: "c4",
+    companyName: "Desert Rose Couture",
+    companyNumber: "CO-004",
+    contactPerson: "Layla Al Ameri",
+    phone: "+971-4-425-7700",
+    notes: "Boutique couture. Small batch, bespoke designs.",
+    createdAt: "2024-02-10",
+    updatedAt: "2024-02-10",
+  },
+  {
+    id: "c5",
+    companyName: "Emirates School Wear Co.",
+    companyNumber: "CO-005",
+    contactPerson: "Ravi Shankar",
+    phone: "+971-6-532-4400",
+    notes: "School uniforms for private schools across UAE.",
+    createdAt: "2024-03-01",
+    updatedAt: "2024-03-01",
+  },
+  {
+    id: "c6",
+    companyName: "Bur Dubai Garments Factory",
+    companyNumber: "CO-006",
+    contactPerson: "Ahmed Hassan",
+    phone: "+971-4-352-1800",
+    notes: "High-volume garment production for export.",
+    createdAt: "2024-03-15",
+    updatedAt: "2024-03-15",
+  },
+];
+
+export const MOCK_DYES: Dye[] = [
+  {
+    id: "dy1",
+    dyeName: "Jet Black",
+    dyeNumber: "DYE-BK-001",
+    description: "Deep, rich black. High wash fastness. Ideal for abaya production.",
+    createdAt: "2024-01-05",
+    updatedAt: "2024-01-05",
+  },
+  {
+    id: "dy2",
+    dyeName: "Royal Navy",
+    dyeNumber: "DYE-NV-002",
+    description: "Deep navy blue. Preferred for uniform and workwear fabrics.",
+    createdAt: "2024-01-05",
+    updatedAt: "2024-01-05",
+  },
+  {
+    id: "dy3",
+    dyeName: "Desert Gold",
+    dyeNumber: "DYE-GD-003",
+    description: "Warm golden tone with metallic sheen. Used for embroidery threads.",
+    createdAt: "2024-01-08",
+    updatedAt: "2024-01-08",
+  },
+  {
+    id: "dy4",
+    dyeName: "Emirates Green",
+    dyeNumber: "DYE-GN-004",
+    description: "Rich emerald green. Vibrant and fade-resistant.",
+    createdAt: "2024-01-08",
+    updatedAt: "2024-01-08",
+  },
+  {
+    id: "dy5",
+    dyeName: "Pearl White",
+    dyeNumber: "DYE-WH-005",
+    description: "Clean white with subtle ivory undertone. For bridal and luxury wear.",
+    createdAt: "2024-01-10",
+    updatedAt: "2024-01-10",
+  },
+  {
+    id: "dy6",
+    dyeName: "Crimson Red",
+    dyeNumber: "DYE-RD-006",
+    description: "Bold crimson. High saturation for festive and occasion wear.",
+    createdAt: "2024-01-12",
+    updatedAt: "2024-01-12",
+  },
+  {
+    id: "dy7",
+    dyeName: "Camel Beige",
+    dyeNumber: "DYE-BG-007",
+    description: "Warm camel tone. Classic neutral for kaftans and thobes.",
+    createdAt: "2024-01-15",
+    updatedAt: "2024-01-15",
+  },
+  {
+    id: "dy8",
+    dyeName: "Burgundy",
+    dyeNumber: "DYE-BU-008",
+    description: "Deep wine red. Elegant for winter and occasion collections.",
+    createdAt: "2024-02-01",
+    updatedAt: "2024-02-01",
+  },
+];
+
+export const MOCK_DESIGNS: Design[] = [
+  {
+    id: "d1",
+    designName: "Al Wasl Abaya Collection",
+    designNumber: "DSN-001",
+    companyId: "c1",
+    dyeId: "dy1",
+    dyeName: "Jet Black",
+    dyeNumber: "DYE-BK-001",
+    description:
+      "Elegant black abaya with golden thread embroidery inspired by traditional Emirati motifs. Features bell sleeves and subtle floral patterns along the cuffs and hemline.",
+    images: [
+      "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1594938298603-c8148c4b4d41?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop",
+    ],
+    coverImage:
+      "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop",
+    createdAt: "2024-01-15",
+    updatedAt: "2024-02-20",
+  },
+  {
+    id: "d2",
+    designName: "Intercontinental Concierge Uniform",
+    designNumber: "DSN-002",
+    companyId: "c2",
+    dyeId: "dy2",
+    dyeName: "Royal Navy",
+    dyeNumber: "DYE-NV-002",
+    description:
+      "Navy and gold concierge uniform for a 5-star hotel. Tailored jacket, trousers, and waistcoat with gold piping details.",
+    images: [
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&auto=format&fit=crop",
+    ],
+    coverImage:
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop",
+    createdAt: "2024-02-01",
+    updatedAt: "2024-03-10",
+  },
+  {
+    id: "d3",
+    designName: "Eid Kaftan — Emerald Series",
+    designNumber: "DSN-003",
+    companyId: "c3",
+    dyeId: "dy4",
+    dyeName: "Emirates Green",
+    dyeNumber: "DYE-GN-004",
+    description:
+      "Flowing kaftan in vibrant emerald with intricate silver embellishment at the neckline. Designed for the Eid Al Fitr collection.",
+    images: [
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&auto=format&fit=crop",
+    ],
+    coverImage:
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&auto=format&fit=crop",
+    createdAt: "2024-02-15",
+    updatedAt: "2024-02-15",
+  },
+  {
+    id: "d4",
+    designName: "Desert Rose Bridal Thobe",
+    designNumber: "DSN-004",
+    companyId: "c4",
+    dyeId: "dy5",
+    dyeName: "Pearl White",
+    dyeNumber: "DYE-WH-005",
+    description:
+      "Bridal thobe with pearl white satin finish. Embroidered with roses along the collar and sleeves. Premium couture finish.",
+    images: [
+      "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=800&auto=format&fit=crop",
+    ],
+    coverImage:
+      "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&auto=format&fit=crop",
+    createdAt: "2024-03-01",
+    updatedAt: "2024-03-05",
+  },
+  {
+    id: "d5",
+    designName: "Al Barsha School Uniform — Boys",
+    designNumber: "DSN-005",
+    companyId: "c5",
+    dyeId: "dy2",
+    dyeName: "Royal Navy",
+    dyeNumber: "DYE-NV-002",
+    description:
+      "Classic school uniform set: navy trousers and white shirt with navy trim. Durable fabric blend for daily wear.",
+    images: [
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop",
+    ],
+    coverImage:
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop",
+    createdAt: "2024-03-10",
+    updatedAt: "2024-03-10",
+  },
+  {
+    id: "d6",
+    designName: "Majlis Jalabiya — Gold Edition",
+    designNumber: "DSN-006",
+    companyId: "c1",
+    dyeId: "dy3",
+    dyeName: "Desert Gold",
+    dyeNumber: "DYE-GD-003",
+    description:
+      "Ceremonial jalabiya in rich gold tone with woven geometric patterns. For Majlis gatherings and formal occasions.",
+    images: [
+      "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=800&auto=format&fit=crop",
+    ],
+    coverImage:
+      "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&auto=format&fit=crop",
+    createdAt: "2024-03-20",
+    updatedAt: "2024-03-20",
+  },
+  {
+    id: "d7",
+    designName: "Bur Dubai Export Kurta",
+    designNumber: "DSN-007",
+    companyId: "c6",
+    dyeId: "dy7",
+    dyeName: "Camel Beige",
+    dyeNumber: "DYE-BG-007",
+    description:
+      "Cotton blend kurta in warm camel beige. Minimal design for export. High volume production item.",
+    images: [
+      "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&auto=format&fit=crop",
+    ],
+    coverImage:
+      "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&auto=format&fit=crop",
+    createdAt: "2024-04-01",
+    updatedAt: "2024-04-01",
+  },
+  {
+    id: "d8",
+    designName: "Madinat Evening Abaya",
+    designNumber: "DSN-008",
+    companyId: "c3",
+    dyeId: "dy8",
+    dyeName: "Burgundy",
+    dyeNumber: "DYE-BU-008",
+    description:
+      "Deep burgundy evening abaya with velvet trim along the neckline and cuffs. Designed for winter formal events.",
+    images: [
+      "https://images.unsplash.com/photo-1566206091558-7f218b696731?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1550614000-4895a10e1bfd?w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1555529771-7888783a18d3?w=800&auto=format&fit=crop",
+    ],
+    coverImage:
+      "https://images.unsplash.com/photo-1566206091558-7f218b696731?w=800&auto=format&fit=crop",
+    createdAt: "2024-04-10",
+    updatedAt: "2024-04-10",
+  },
+];
