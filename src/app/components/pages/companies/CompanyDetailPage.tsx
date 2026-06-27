@@ -14,12 +14,26 @@ import {
   DialogTitle,
 } from "../../ui/dialog";
 
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="text-xs text-red-500 mt-1">{msg}</p>;
+}
+
+function inputCls(hasError?: boolean) {
+  return `w-full px-4 py-3 bg-gray-50 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+    hasError
+      ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+      : "border-gray-200 focus:border-[#1a3461] focus:ring-[#1a3461]/10"
+  }`;
+}
+
 export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCompanyById, getDesignsByCompany, deleteCompany, updateCompany } = useStore();
+  const { getCompanyById, getDesignsByCompany, deleteCompany, updateCompany, companies } = useStore();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [editErrors, setEditErrors] = useState<Partial<Record<"companyName" | "companyNumber", string>>>({});
 
   const company = getCompanyById(id ?? "");
   const designs = getDesignsByCompany(id ?? "");
@@ -57,17 +71,26 @@ export default function CompanyDetailPage() {
   };
 
   const handleSaveEdit = () => {
-    if (!editForm.companyName.trim() || !editForm.companyNumber.trim()) {
-      toast.error("Company name and number are required.");
-      return;
+    const e: typeof editErrors = {};
+    if (!editForm.companyName.trim()) e.companyName = "Company name is required.";
+    if (!editForm.companyNumber.trim()) {
+      e.companyNumber = "Company number is required.";
+    } else {
+      const norm = editForm.companyNumber.trim().toLowerCase();
+      const dup = companies.find((c) => c.id !== company.id && c.companyNumber.toLowerCase() === norm);
+      if (dup) e.companyNumber = `Company number "${editForm.companyNumber.trim()}" is already used. Choose a different number.`;
     }
+    if (Object.keys(e).length) { setEditErrors(e); return; }
     updateCompany(company.id, editForm);
     setShowEdit(false);
+    setEditErrors({});
     toast.success("Company updated.");
   };
 
-  const setEdit = (key: keyof typeof editForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const setEdit = (key: keyof typeof editForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setEditForm((prev) => ({ ...prev, [key]: e.target.value }));
+    setEditErrors((p) => ({ ...p, [key]: undefined }));
+  };
 
   return (
     <div className="p-5 md:p-8 max-w-4xl mx-auto">
@@ -175,30 +198,32 @@ export default function CompanyDetailPage() {
             <DialogTitle>Edit Company</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            {[
-              { label: "Company Name *", key: "companyName", placeholder: "" },
-              { label: "Company Number *", key: "companyNumber", placeholder: "" },
-              { label: "Contact Person", key: "contactPerson", placeholder: "" },
-              { label: "Phone", key: "phone", placeholder: "" },
-            ].map(({ label, key }) => (
-              <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
-                <input
-                  type="text"
-                  value={editForm[key as keyof typeof editForm]}
-                  onChange={setEdit(key as keyof typeof editForm)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1a3461] focus:ring-2 focus:ring-[#1a3461]/10 transition-all"
-                />
-              </div>
-            ))}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Company Name *</label>
+              <input type="text" value={editForm.companyName} onChange={setEdit("companyName")}
+                className={inputCls(!!editErrors.companyName)} />
+              <FieldError msg={editErrors.companyName} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Company Number *</label>
+              <input type="text" value={editForm.companyNumber} onChange={setEdit("companyNumber")}
+                className={inputCls(!!editErrors.companyNumber)} />
+              <FieldError msg={editErrors.companyNumber} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Contact Person</label>
+              <input type="text" value={editForm.contactPerson} onChange={setEdit("contactPerson")}
+                className={inputCls()} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+              <input type="text" value={editForm.phone} onChange={setEdit("phone")}
+                className={inputCls()} />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
-              <textarea
-                value={editForm.notes}
-                onChange={setEdit("notes")}
-                rows={2}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1a3461] focus:ring-2 focus:ring-[#1a3461]/10 transition-all resize-none"
-              />
+              <textarea value={editForm.notes} onChange={setEdit("notes")} rows={2}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1a3461] focus:ring-2 focus:ring-[#1a3461]/10 transition-all resize-none" />
             </div>
             <div className="flex gap-3 pt-1">
               <button

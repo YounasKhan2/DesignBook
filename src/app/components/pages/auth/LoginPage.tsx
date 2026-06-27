@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
-import { BookOpen, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { BookOpen, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -30,23 +30,26 @@ export default function LoginPage() {
         className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 p-10"
         style={{ background: "linear-gradient(160deg, #0f2040 0%, #1a3461 100%)" }}
       >
-        <div className="flex items-center gap-2">
+        {/* Logo — clickable back to home */}
+        <button onClick={() => navigate("/")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#10b981" }}>
             <BookOpen className="w-4 h-4 text-white" />
           </div>
           <span className="text-white font-semibold text-lg">DesignBook</span>
-        </div>
+        </button>
+
         <div>
           <blockquote className="text-white/70 text-lg leading-relaxed italic mb-4">
             "Every great collection starts with a well-organized design catalog."
           </blockquote>
           <p className="text-white/40 text-sm">— Dubai Fashion Week</p>
         </div>
+
         <div className="grid grid-cols-3 gap-2">
           {[
-            "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=200&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=200&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=200&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1585914924626-15adac1e6402?w=200&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1619449557564-f64e49c41d6e?w=200&auto=format&fit=crop",
           ].map((src, i) => (
             <div key={i} className="aspect-square rounded-xl overflow-hidden opacity-60">
               <img src={src} alt="" className="w-full h-full object-cover" />
@@ -57,13 +60,24 @@ export default function LoginPage() {
 
       {/* Right panel — form */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-[#f4f6f9]">
-        {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-2 mb-8">
+        {/* Back to home link */}
+        <div className="w-full max-w-sm mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Home
+          </Link>
+        </div>
+
+        {/* Mobile logo — clickable */}
+        <button onClick={() => navigate("/")} className="lg:hidden flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a3461" }}>
             <BookOpen className="w-4 h-4 text-white" />
           </div>
           <span className="font-semibold text-gray-900 text-lg">DesignBook</span>
-        </div>
+        </button>
 
         <div className="w-full max-w-sm">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h1>

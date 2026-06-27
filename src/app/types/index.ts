@@ -29,6 +29,8 @@ export interface Dye {
   dyeName: string;
   dyeNumber: string;
   description?: string;
+  images: string[];
+  coverImage: string;
   createdAt: string;
   updatedAt: string;
 }

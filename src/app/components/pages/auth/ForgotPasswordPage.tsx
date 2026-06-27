@@ -25,13 +25,24 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#f4f6f9] px-6" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-10">
+        {/* Back to Home */}
+        <div className="mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Home
+          </Link>
+        </div>
+
+        {/* Clickable logo */}
+        <button onClick={() => navigate("/")} className="flex items-center justify-center gap-2 mb-8 mx-auto hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a3461" }}>
             <BookOpen className="w-4 h-4 text-white" />
           </div>
           <span className="font-semibold text-gray-900 text-lg">DesignBook</span>
-        </div>
+        </button>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           {!sent ? (

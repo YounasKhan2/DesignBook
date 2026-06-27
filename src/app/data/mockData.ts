@@ -63,12 +63,44 @@ export const MOCK_COMPANIES: Company[] = [
   },
 ];
 
+// Garment/textile/factory Unsplash images only
+const IMG = {
+  // Fabric rolls & textiles
+  fabricRoll1: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop",
+  fabricRoll2: "https://images.unsplash.com/photo-1586495777744-4e6232bf2176?w=800&auto=format&fit=crop",
+  fabricBlack: "https://images.unsplash.com/photo-1594020293008-5f99db53f4c5?w=800&auto=format&fit=crop",
+  // Stitching & sewing
+  sewing1: "https://images.unsplash.com/photo-1585914924626-15adac1e6402?w=800&auto=format&fit=crop",
+  sewing2: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800&auto=format&fit=crop",
+  sewingDetail: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800&auto=format&fit=crop",
+  // Embroidery & pattern
+  embroidery1: "https://images.unsplash.com/photo-1619449557564-f64e49c41d6e?w=800&auto=format&fit=crop",
+  embroidery2: "https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=800&auto=format&fit=crop",
+  // Garments on rack/display
+  garment1: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&auto=format&fit=crop",
+  garment2: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=800&auto=format&fit=crop",
+  garmentHanging: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop",
+  // Tailoring table & cutting
+  tailoring1: "https://images.unsplash.com/photo-1558171813-da2bb3f8e7af?w=800&auto=format&fit=crop",
+  tailoring2: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop",
+  // Thread & yarn (dye colors)
+  threadBlack: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&auto=format&fit=crop",
+  threadColorful: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&auto=format&fit=crop",
+  threadGold: "https://images.unsplash.com/photo-1582582621959-48d27397dc69?w=800&auto=format&fit=crop",
+  // Textile/swatch samples
+  swatchDark: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop",
+  swatchNavy: "https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?w=800&auto=format&fit=crop",
+  swatchWhite: "https://images.unsplash.com/photo-1571045520167-c40f54bfa4e8?w=800&auto=format&fit=crop",
+};
+
 export const MOCK_DYES: Dye[] = [
   {
     id: "dy1",
     dyeName: "Jet Black",
     dyeNumber: "DYE-BK-001",
-    description: "Deep, rich black. High wash fastness. Ideal for abaya production.",
+    description: "Deep, rich black. High wash fastness. Ideal for abaya and formal garment production.",
+    images: [IMG.threadBlack, IMG.fabricBlack],
+    coverImage: IMG.threadBlack,
     createdAt: "2024-01-05",
     updatedAt: "2024-01-05",
   },
@@ -76,7 +108,9 @@ export const MOCK_DYES: Dye[] = [
     id: "dy2",
     dyeName: "Royal Navy",
     dyeNumber: "DYE-NV-002",
-    description: "Deep navy blue. Preferred for uniform and workwear fabrics.",
+    description: "Deep navy blue. Preferred for polyester uniform and workwear fabrics.",
+    images: [IMG.swatchNavy, IMG.threadColorful],
+    coverImage: IMG.swatchNavy,
     createdAt: "2024-01-05",
     updatedAt: "2024-01-05",
   },
@@ -84,7 +118,9 @@ export const MOCK_DYES: Dye[] = [
     id: "dy3",
     dyeName: "Desert Gold",
     dyeNumber: "DYE-GD-003",
-    description: "Warm golden tone with metallic sheen. Used for embroidery threads.",
+    description: "Warm golden tone with metallic sheen. Used for embroidery threads and trim.",
+    images: [IMG.threadGold, IMG.embroidery1],
+    coverImage: IMG.threadGold,
     createdAt: "2024-01-08",
     updatedAt: "2024-01-08",
   },
@@ -92,7 +128,9 @@ export const MOCK_DYES: Dye[] = [
     id: "dy4",
     dyeName: "Emirates Green",
     dyeNumber: "DYE-GN-004",
-    description: "Rich emerald green. Vibrant and fade-resistant.",
+    description: "Rich emerald green. Vibrant and fade-resistant for kaftans and occasion wear.",
+    images: [IMG.fabricRoll2],
+    coverImage: IMG.fabricRoll2,
     createdAt: "2024-01-08",
     updatedAt: "2024-01-08",
   },
@@ -101,6 +139,8 @@ export const MOCK_DYES: Dye[] = [
     dyeName: "Pearl White",
     dyeNumber: "DYE-WH-005",
     description: "Clean white with subtle ivory undertone. For bridal and luxury wear.",
+    images: [IMG.swatchWhite, IMG.fabricRoll1],
+    coverImage: IMG.swatchWhite,
     createdAt: "2024-01-10",
     updatedAt: "2024-01-10",
   },
@@ -109,6 +149,8 @@ export const MOCK_DYES: Dye[] = [
     dyeName: "Crimson Red",
     dyeNumber: "DYE-RD-006",
     description: "Bold crimson. High saturation for festive and occasion wear.",
+    images: [IMG.embroidery2],
+    coverImage: IMG.embroidery2,
     createdAt: "2024-01-12",
     updatedAt: "2024-01-12",
   },
@@ -117,6 +159,8 @@ export const MOCK_DYES: Dye[] = [
     dyeName: "Camel Beige",
     dyeNumber: "DYE-BG-007",
     description: "Warm camel tone. Classic neutral for kaftans and thobes.",
+    images: [IMG.fabricRoll1, IMG.swatchDark],
+    coverImage: IMG.fabricRoll1,
     createdAt: "2024-01-15",
     updatedAt: "2024-01-15",
   },
@@ -125,6 +169,8 @@ export const MOCK_DYES: Dye[] = [
     dyeName: "Burgundy",
     dyeNumber: "DYE-BU-008",
     description: "Deep wine red. Elegant for winter and occasion collections.",
+    images: [IMG.threadColorful],
+    coverImage: IMG.threadColorful,
     createdAt: "2024-02-01",
     updatedAt: "2024-02-01",
   },
@@ -141,13 +187,8 @@ export const MOCK_DESIGNS: Design[] = [
     dyeNumber: "DYE-BK-001",
     description:
       "Elegant black abaya with golden thread embroidery inspired by traditional Emirati motifs. Features bell sleeves and subtle floral patterns along the cuffs and hemline.",
-    images: [
-      "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1594938298603-c8148c4b4d41?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop",
-    ],
-    coverImage:
-      "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop",
+    images: [IMG.garment1, IMG.embroidery1, IMG.sewingDetail],
+    coverImage: IMG.garment1,
     createdAt: "2024-01-15",
     updatedAt: "2024-02-20",
   },
@@ -161,12 +202,8 @@ export const MOCK_DESIGNS: Design[] = [
     dyeNumber: "DYE-NV-002",
     description:
       "Navy and gold concierge uniform for a 5-star hotel. Tailored jacket, trousers, and waistcoat with gold piping details.",
-    images: [
-      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&auto=format&fit=crop",
-    ],
-    coverImage:
-      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop",
+    images: [IMG.garment2, IMG.tailoring1],
+    coverImage: IMG.garment2,
     createdAt: "2024-02-01",
     updatedAt: "2024-03-10",
   },
@@ -180,12 +217,8 @@ export const MOCK_DESIGNS: Design[] = [
     dyeNumber: "DYE-GN-004",
     description:
       "Flowing kaftan in vibrant emerald with intricate silver embellishment at the neckline. Designed for the Eid Al Fitr collection.",
-    images: [
-      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&auto=format&fit=crop",
-    ],
-    coverImage:
-      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&auto=format&fit=crop",
+    images: [IMG.garmentHanging, IMG.fabricRoll2],
+    coverImage: IMG.garmentHanging,
     createdAt: "2024-02-15",
     updatedAt: "2024-02-15",
   },
@@ -199,13 +232,8 @@ export const MOCK_DESIGNS: Design[] = [
     dyeNumber: "DYE-WH-005",
     description:
       "Bridal thobe with pearl white satin finish. Embroidered with roses along the collar and sleeves. Premium couture finish.",
-    images: [
-      "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=800&auto=format&fit=crop",
-    ],
-    coverImage:
-      "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&auto=format&fit=crop",
+    images: [IMG.embroidery2, IMG.sewingDetail, IMG.sewing2],
+    coverImage: IMG.embroidery2,
     createdAt: "2024-03-01",
     updatedAt: "2024-03-05",
   },
@@ -219,11 +247,8 @@ export const MOCK_DESIGNS: Design[] = [
     dyeNumber: "DYE-NV-002",
     description:
       "Classic school uniform set: navy trousers and white shirt with navy trim. Durable fabric blend for daily wear.",
-    images: [
-      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop",
-    ],
-    coverImage:
-      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop",
+    images: [IMG.tailoring2],
+    coverImage: IMG.tailoring2,
     createdAt: "2024-03-10",
     updatedAt: "2024-03-10",
   },
@@ -237,12 +262,8 @@ export const MOCK_DESIGNS: Design[] = [
     dyeNumber: "DYE-GD-003",
     description:
       "Ceremonial jalabiya in rich gold tone with woven geometric patterns. For Majlis gatherings and formal occasions.",
-    images: [
-      "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=800&auto=format&fit=crop",
-    ],
-    coverImage:
-      "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&auto=format&fit=crop",
+    images: [IMG.threadGold, IMG.embroidery1, IMG.sewing1],
+    coverImage: IMG.threadGold,
     createdAt: "2024-03-20",
     updatedAt: "2024-03-20",
   },
@@ -256,12 +277,8 @@ export const MOCK_DESIGNS: Design[] = [
     dyeNumber: "DYE-BG-007",
     description:
       "Cotton blend kurta in warm camel beige. Minimal design for export. High volume production item.",
-    images: [
-      "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&auto=format&fit=crop",
-    ],
-    coverImage:
-      "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&auto=format&fit=crop",
+    images: [IMG.fabricRoll1, IMG.sewing2],
+    coverImage: IMG.fabricRoll1,
     createdAt: "2024-04-01",
     updatedAt: "2024-04-01",
   },
@@ -275,13 +292,8 @@ export const MOCK_DESIGNS: Design[] = [
     dyeNumber: "DYE-BU-008",
     description:
       "Deep burgundy evening abaya with velvet trim along the neckline and cuffs. Designed for winter formal events.",
-    images: [
-      "https://images.unsplash.com/photo-1566206091558-7f218b696731?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1550614000-4895a10e1bfd?w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1555529771-7888783a18d3?w=800&auto=format&fit=crop",
-    ],
-    coverImage:
-      "https://images.unsplash.com/photo-1566206091558-7f218b696731?w=800&auto=format&fit=crop",
+    images: [IMG.garment1, IMG.sewingDetail, IMG.embroidery2],
+    coverImage: IMG.garment1,
     createdAt: "2024-04-10",
     updatedAt: "2024-04-10",
   },

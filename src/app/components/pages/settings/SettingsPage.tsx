@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { User, Mail, Building2, Lock, Smartphone, Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router";
+import { User, Mail, Building2, Lock, Smartphone, Eye, EyeOff, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import ConfirmDialog from "../../shared/ConfirmDialog";
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
+
   const [profile, setProfile] = useState({
     ownerName: "Mohammed Al Rashidi",
     businessName: "Al Barsha Textiles LLC",
@@ -18,6 +22,7 @@ export default function SettingsPage() {
   const [showPass, setShowPass] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPass, setSavingPass] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "password" | "pwa">("profile");
 
   const setP = (key: keyof typeof profile) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -55,6 +60,11 @@ export default function SettingsPage() {
     setSavingPass(false);
     setPasswords({ current: "", newPass: "", confirm: "" });
     toast.success("Password changed successfully.");
+  };
+
+  const handleSignOut = () => {
+    toast.success("Signed out. See you soon!");
+    navigate("/");
   };
 
   const TABS = [
@@ -101,7 +111,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <p className="font-semibold text-gray-900">{profile.ownerName}</p>
-              <p className="text-sm text-gray-500">Owner</p>
+              <p className="text-sm text-gray-500">Owner · {profile.businessName}</p>
             </div>
           </div>
 
@@ -218,7 +228,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* PWA tab */}
+      {/* PWA / Install tab */}
       {activeTab === "pwa" && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <div className="flex items-center gap-3 mb-5">
@@ -227,7 +237,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <h2 className="font-semibold text-gray-900">Install DesignBook</h2>
-              <p className="text-sm text-gray-500">Add to your home screen</p>
+              <p className="text-sm text-gray-500">Add to your home screen for quick access</p>
             </div>
           </div>
 
@@ -236,7 +246,7 @@ export default function SettingsPage() {
               <p className="font-medium text-gray-800 mb-2">On iPhone / iPad (Safari)</p>
               <ol className="space-y-1.5 list-decimal list-inside text-gray-500">
                 <li>Open DesignBook in Safari</li>
-                <li>Tap the Share button at the bottom of the screen</li>
+                <li>Tap the Share button at the bottom</li>
                 <li>Scroll down and tap "Add to Home Screen"</li>
                 <li>Tap "Add" in the top-right corner</li>
               </ol>
@@ -268,10 +278,32 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* Account section — sign out (visible on all tabs, especially useful on mobile) */}
+      <div className="mt-6 bg-white rounded-2xl border border-gray-100 p-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-1">Account</h3>
+        <p className="text-xs text-gray-400 mb-4">You are signed in as {profile.email}</p>
+        <button
+          onClick={() => setConfirmSignOut(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition-all"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
+      </div>
+
       {/* App version */}
-      <p className="text-center text-xs text-gray-400 mt-6">
+      <p className="text-center text-xs text-gray-400 mt-5">
         DesignBook v1.0 · Built for Dubai's garment industry
       </p>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        onClose={() => setConfirmSignOut(false)}
+        onConfirm={handleSignOut}
+        title="Sign out?"
+        description="You will be returned to the login page."
+        confirmLabel="Sign Out"
+      />
     </div>
   );
 }
