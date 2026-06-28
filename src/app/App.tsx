@@ -1,7 +1,6 @@
 import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation } from "react-router";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import { StoreProvider } from "./hooks/useStore";
 
 import LandingPage from "./components/pages/landing/LandingPage";
 import LoginPage from "./components/pages/auth/LoginPage";
@@ -90,10 +89,8 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <AuthProvider>
-      <StoreProvider>
-        <RouterProvider router={router} />
-        <Toaster position="top-right" richColors />
-      </StoreProvider>
+      <RouterProvider router={router} />
+      <Toaster position="top-right" richColors />
     </AuthProvider>
   );
 }

@@ -1,7 +1,6 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Droplets } from "lucide-react";
 import { toast } from "sonner";
-import { useStore } from "../../../hooks/useStore";
 import DyeCard from "../../shared/DyeCard";
 import EmptyState from "../../shared/EmptyState";
 import ImageUpload from "../../shared/ImageUpload";
@@ -12,6 +11,12 @@ import {
   DialogTitle,
 } from "../../ui/dialog";
 import type { Dye } from "../../../types";
+import {
+  createDye,
+  getDyeErrorMessage,
+  listDyes,
+  type DyeInput,
+} from "../../../services/dyesService";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -115,9 +120,25 @@ function DyeForm({
 }
 
 export default function DyesPage() {
-  const { dyes, addDye, getDesignsByDye } = useStore();
+  const [dyes, setDyes] = useState<Dye[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+
+  const loadDyes = async () => {
+    setLoading(true);
+    try {
+      setDyes(await listDyes());
+    } catch (error) {
+      toast.error(getDyeErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDyes();
+  }, []);
 
   const filtered = useMemo(
     () => dyes.filter(
@@ -152,7 +173,11 @@ export default function DyesPage() {
           className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#1a3461] focus:ring-2 focus:ring-[#1a3461]/10 transition-all" />
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
+          <p className="text-sm text-gray-500">Loading dyes...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={Droplets}
           title={search ? "No dyes found" : "No dyes yet"}
@@ -171,7 +196,7 @@ export default function DyesPage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {filtered.map((dye) => (
-            <DyeCard key={dye.id} dye={dye} designCount={getDesignsByDye(dye.id).length} />
+            <DyeCard key={dye.id} dye={dye} designCount={0} />
           ))}
         </div>
       )}
@@ -183,10 +208,21 @@ export default function DyesPage() {
           </DialogHeader>
           <DyeForm
             existingDyes={dyes}
-            onSave={(data) => {
-              addDye(data);
-              setShowAdd(false);
-              toast.success("Dye added.");
+            onSave={async (data) => {
+              try {
+                const input: DyeInput = {
+                  dyeName: data.dyeName,
+                  dyeNumber: data.dyeNumber,
+                  description: data.description,
+                  coverImage: data.coverImage,
+                };
+                await createDye(input, data.images);
+                setShowAdd(false);
+                await loadDyes();
+                toast.success("Dye added.");
+              } catch (error) {
+                toast.error(getDyeErrorMessage(error));
+              }
             }}
             onCancel={() => setShowAdd(false)}
           />

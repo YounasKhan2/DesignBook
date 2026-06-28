@@ -1,32 +1,68 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
-import { useStore } from "../../../hooks/useStore";
 import DesignCard from "../../shared/DesignCard";
 import EmptyState from "../../shared/EmptyState";
 import { Layers } from "lucide-react";
+import { listCompanies } from "../../../services/companiesService";
+import { listDyes } from "../../../services/dyesService";
+import {
+  companyNameForDesign,
+  getDesignErrorMessage,
+  listDesigns,
+  type DesignWithRelations,
+} from "../../../services/designsService";
+import type { Company, Dye } from "../../../types";
+import { toast } from "sonner";
 
 export default function DesignsGalleryPage() {
   const navigate = useNavigate();
-  const { designs, companies, dyes, getCompanyById } = useStore();
+  const [designs, setDesigns] = useState<DesignWithRelations[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [dyes, setDyes] = useState<Dye[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCompany, setFilterCompany] = useState("");
   const [filterDye, setFilterDye] = useState("");
 
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const [nextDesigns, nextCompanies, nextDyes] = await Promise.all([
+          listDesigns(),
+          listCompanies(),
+          listDyes(),
+        ]);
+        setDesigns(nextDesigns);
+        setCompanies(nextCompanies);
+        setDyes(nextDyes);
+      } catch (error) {
+        toast.error(getDesignErrorMessage(error));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
   const filtered = useMemo(() => {
     return designs.filter((d) => {
       const q = search.toLowerCase();
+      const companyName = companyNameForDesign(d, companies) ?? "";
       const matchSearch =
         !q ||
         d.designName.toLowerCase().includes(q) ||
         d.designNumber.toLowerCase().includes(q) ||
         d.dyeName.toLowerCase().includes(q) ||
+        companyName.toLowerCase().includes(q) ||
         d.description.toLowerCase().includes(q);
       const matchCompany = !filterCompany || d.companyId === filterCompany;
       const matchDye = !filterDye || d.dyeId === filterDye;
       return matchSearch && matchCompany && matchDye;
     });
-  }, [designs, search, filterCompany, filterDye]);
+  }, [companies, designs, search, filterCompany, filterDye]);
 
   const hasFilters = search || filterCompany || filterDye;
 
@@ -58,7 +94,7 @@ export default function DesignsGalleryPage() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, number, or description…"
+          placeholder="Search by name, number, or description..."
           className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#1a3461] focus:ring-2 focus:ring-[#1a3461]/10 transition-all"
         />
         <div className="grid grid-cols-2 gap-3">
@@ -79,7 +115,7 @@ export default function DesignsGalleryPage() {
           >
             <option value="">All Dyes</option>
             {dyes.map((d) => (
-              <option key={d.id} value={d.id}>{d.dyeName} · {d.dyeNumber}</option>
+              <option key={d.id} value={d.id}>{d.dyeName} - {d.dyeNumber}</option>
             ))}
           </select>
         </div>
@@ -93,15 +129,17 @@ export default function DesignsGalleryPage() {
         )}
       </div>
 
-      {/* Results count */}
-      {hasFilters && (
+      {hasFilters && !loading && (
         <p className="text-sm text-gray-500 mb-4">
           {filtered.length} result{filtered.length !== 1 ? "s" : ""} found
         </p>
       )}
 
-      {/* Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
+          <p className="text-sm text-gray-500">Loading designs...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={Layers}
           title={hasFilters ? "No designs match your filters" : "No designs yet"}
@@ -125,16 +163,13 @@ export default function DesignsGalleryPage() {
         />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {filtered.map((design) => {
-            const company = getCompanyById(design.companyId);
-            return (
-              <DesignCard
-                key={design.id}
-                design={design}
-                companyName={company?.companyName}
-              />
-            );
-          })}
+          {filtered.map((design) => (
+            <DesignCard
+              key={design.id}
+              design={design}
+              companyName={companyNameForDesign(design, companies)}
+            />
+          ))}
         </div>
       )}
     </div>

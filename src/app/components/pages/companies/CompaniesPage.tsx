@@ -70,7 +70,7 @@ function CompanyForm({
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Company Name *</label>
         <input type="text" value={form.companyName} onChange={set("companyName")}
-          placeholder="e.g. Al Barsha Textiles LLC" className={inputCls(!!errors.companyName)} autoFocus />
+          placeholder="e.g. Client or supplier name" className={inputCls(!!errors.companyName)} autoFocus />
         <FieldError msg={errors.companyName} />
       </div>
       <div>

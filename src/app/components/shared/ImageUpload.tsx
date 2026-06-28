@@ -14,15 +14,20 @@ export default function ImageUpload({ images, coverImage, onImagesChange, onCove
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const url = e.target?.result as string;
-        onImagesChange([...images, url]);
-        if (images.length === 0) onCoverChange(url);
-      };
-      reader.readAsDataURL(file);
+    const imageFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    Promise.all(
+      imageFiles.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.readAsDataURL(file);
+          })
+      )
+    ).then((urls) => {
+      if (urls.length === 0) return;
+      onImagesChange([...images, ...urls]);
+      if (images.length === 0) onCoverChange(urls[0]);
     });
   };
 

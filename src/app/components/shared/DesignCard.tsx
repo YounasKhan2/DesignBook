@@ -18,16 +18,21 @@ export default function DesignCard({ design, companyName }: Props) {
     >
       {/* Image */}
       <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
-        <img
-          src={design.coverImage}
-          alt={design.designName}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          loading="lazy"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&auto=format&fit=crop";
-          }}
-        />
+        {design.coverImage ? (
+          <img
+            src={design.coverImage}
+            alt={design.designName}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Images className="w-10 h-10 text-gray-300" />
+          </div>
+        )}
 
         {/* Image count badge */}
         {design.images.length > 1 && (

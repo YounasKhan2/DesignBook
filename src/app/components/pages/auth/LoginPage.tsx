@@ -54,13 +54,9 @@ export default function LoginPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          {[
-            "https://images.unsplash.com/photo-1585914924626-15adac1e6402?w=200&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1619449557564-f64e49c41d6e?w=200&auto=format&fit=crop",
-          ].map((src, i) => (
+          {["#ffffff1f", "#10b98140", "#ffffff14"].map((color, i) => (
             <div key={i} className="aspect-square rounded-xl overflow-hidden opacity-60">
-              <img src={src} alt="" className="w-full h-full object-cover" />
+              <div className="w-full h-full" style={{ backgroundColor: color }} />
             </div>
           ))}
         </div>

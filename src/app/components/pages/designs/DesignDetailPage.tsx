@@ -1,18 +1,67 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Edit, Trash2, Building2, Droplets, ChevronLeft, Images } from "lucide-react";
 import { toast } from "sonner";
-import { useStore } from "../../../hooks/useStore";
 import ConfirmDialog from "../../shared/ConfirmDialog";
+import type { Company, Dye } from "../../../types";
+import { getCompanyById } from "../../../services/companiesService";
+import { getDyeById } from "../../../services/dyesService";
+import {
+  deleteDesign,
+  getDesignById,
+  getDesignErrorMessage,
+  type DesignWithRelations,
+} from "../../../services/designsService";
 
 export default function DesignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getDesignById, getCompanyById, getDyeById, deleteDesign } = useStore();
+  const [design, setDesign] = useState<DesignWithRelations | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [dye, setDye] = useState<Dye | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const design = getDesignById(id ?? "");
+  useEffect(() => {
+    async function load() {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const nextDesign = await getDesignById(id);
+        setDesign(nextDesign);
+        setActiveImg(0);
+        if (nextDesign) {
+          const [nextCompany, nextDye] = await Promise.all([
+            getCompanyById(nextDesign.companyId),
+            getDyeById(nextDesign.dyeId),
+          ]);
+          setCompany(nextCompany);
+          setDye(nextDye);
+        }
+      } catch (error) {
+        toast.error(getDesignErrorMessage(error));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto p-5 md:p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
+          <p className="text-sm text-gray-500">Loading design...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!design) {
     return (
@@ -30,18 +79,20 @@ export default function DesignDetailPage() {
     );
   }
 
-  const company = getCompanyById(design.companyId);
-  const dye = getDyeById(design.dyeId);
   const displayImages = design.images.length > 0
     ? design.images
     : design.coverImage
       ? [design.coverImage]
       : [];
 
-  const handleDelete = () => {
-    deleteDesign(design.id);
-    toast.success("Design deleted.");
-    navigate("/app/designs");
+  const handleDelete = async () => {
+    try {
+      await deleteDesign(design.id);
+      toast.success("Design deleted.");
+      navigate("/app/designs");
+    } catch (error) {
+      toast.error(getDesignErrorMessage(error));
+    }
   };
 
   return (
@@ -49,7 +100,6 @@ export default function DesignDetailPage() {
       <div className="md:grid md:grid-cols-[1fr_380px] md:gap-0 min-h-screen">
         {/* Left: image gallery */}
         <div className="md:sticky md:top-0 md:h-screen flex flex-col">
-          {/* Main image */}
           <div className="relative flex-1 bg-gray-100 overflow-hidden md:rounded-none min-h-[55vw] md:min-h-0">
             {displayImages.length > 0 ? (
               <img
@@ -57,8 +107,7 @@ export default function DesignDetailPage() {
                 alt={design.designName}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop";
+                  (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
             ) : (
@@ -67,7 +116,6 @@ export default function DesignDetailPage() {
               </div>
             )}
 
-            {/* Image counter */}
             {displayImages.length > 1 && (
               <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur">
                 {activeImg + 1} / {displayImages.length}
@@ -75,12 +123,11 @@ export default function DesignDetailPage() {
             )}
           </div>
 
-          {/* Thumbnails */}
           {displayImages.length > 1 && (
             <div className="flex gap-2 p-3 bg-white border-t border-gray-100 overflow-x-auto">
               {displayImages.map((src, i) => (
                 <button
-                  key={i}
+                  key={src}
                   onClick={() => setActiveImg(i)}
                   className={`shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
                     i === activeImg ? "border-[#1a3461]" : "border-transparent"
@@ -102,7 +149,6 @@ export default function DesignDetailPage() {
 
         {/* Right: details */}
         <div className="p-5 md:p-8 space-y-5 border-l border-gray-100 bg-white min-h-full">
-          {/* Header */}
           <div>
             <p className="text-xs font-semibold text-[#10b981] uppercase tracking-wider mb-1">
               {design.designNumber}
@@ -111,7 +157,6 @@ export default function DesignDetailPage() {
               {design.designName}
             </h1>
 
-            {/* Actions */}
             <div className="flex gap-2">
               <button
                 onClick={() => navigate(`/app/designs/${design.id}/edit`)}
@@ -131,7 +176,6 @@ export default function DesignDetailPage() {
             </div>
           </div>
 
-          {/* Details */}
           <div className="space-y-4">
             {company && (
               <button
@@ -151,9 +195,9 @@ export default function DesignDetailPage() {
               </button>
             )}
 
-            {(design.dyeName || dye) && (
+            {dye && (
               <button
-                onClick={() => dye && navigate(`/app/dyes/${dye.id}`)}
+                onClick={() => navigate(`/app/dyes/${dye.id}`)}
                 className="w-full flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-left"
               >
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
@@ -162,15 +206,14 @@ export default function DesignDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 mb-0.5">Dye</p>
-                  <p className="text-sm font-semibold text-gray-900">{design.dyeName || dye?.dyeName}</p>
-                  <p className="text-xs text-[#10b981]">{design.dyeNumber || dye?.dyeNumber}</p>
+                  <p className="text-sm font-semibold text-gray-900">{dye.dyeName}</p>
+                  <p className="text-xs text-[#10b981]">{dye.dyeNumber}</p>
                 </div>
                 <Droplets className="w-4 h-4 text-gray-300 ml-auto" />
               </button>
             )}
           </div>
 
-          {/* Description */}
           {design.description && (
             <div className="border-t border-gray-100 pt-5">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Description</p>
@@ -178,7 +221,6 @@ export default function DesignDetailPage() {
             </div>
           )}
 
-          {/* Meta */}
           <div className="border-t border-gray-100 pt-5 space-y-2">
             <div className="flex items-center justify-between text-xs text-gray-400">
               <span>Created</span>

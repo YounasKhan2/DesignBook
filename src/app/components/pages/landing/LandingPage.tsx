@@ -24,7 +24,7 @@ const FEATURES = [
   },
 ];
 
-const MOCK_CARDS = [
+const DEMO_CARDS = [
   {
     img: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=300&auto=format&fit=crop",
     name: "Al Wasl Abaya",
@@ -156,7 +156,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  {MOCK_CARDS.map((card) => (
+                  {DEMO_CARDS.map((card) => (
                     <div key={card.num} className="bg-white rounded-xl overflow-hidden shadow-sm">
                       <div className="aspect-[3/4] bg-gray-100">
                         <img

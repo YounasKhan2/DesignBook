@@ -2,22 +2,6 @@ import { useNavigate } from "react-router";
 import { Images, Layers } from "lucide-react";
 import type { Dye } from "../../types";
 
-// Fallback accent colors keyed by dye number for search/list views
-const DYE_COLORS: Record<string, string> = {
-  "DYE-BK-001": "#1a1a1a",
-  "DYE-NV-002": "#1a3461",
-  "DYE-GD-003": "#c9a84c",
-  "DYE-GN-004": "#10b981",
-  "DYE-WH-005": "#f0ede8",
-  "DYE-RD-006": "#c0392b",
-  "DYE-BG-007": "#c19a6b",
-  "DYE-BU-008": "#722f37",
-};
-
-export function getDyeColor(dyeNumber: string): string {
-  return DYE_COLORS[dyeNumber] ?? "#94a3b8";
-}
-
 interface Props {
   dye: Dye;
   designCount?: number;
@@ -48,7 +32,7 @@ export default function DyeCard({ dye, designCount = 0 }: Props) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="w-10 h-10 rounded-xl opacity-30" style={{ backgroundColor: "#1a3461" }} />
+            <Images className="w-10 h-10 text-gray-300" />
           </div>
         )}
 

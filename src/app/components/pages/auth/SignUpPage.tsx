@@ -153,7 +153,7 @@ export default function SignUpPage() {
                 type="text"
                 value={form.fullName}
                 onChange={set("fullName")}
-                placeholder="Mohammed Al Rashidi"
+                placeholder="Your name"
                 className={inputCls(!!errors.fullName)}
               />
               <FieldError msg={errors.fullName} />
@@ -165,7 +165,7 @@ export default function SignUpPage() {
                 type="text"
                 value={form.businessName}
                 onChange={set("businessName")}
-                placeholder="Al Barsha Textiles LLC"
+                placeholder="Your business name"
                 className={inputCls(!!errors.businessName)}
               />
               <FieldError msg={errors.businessName} />

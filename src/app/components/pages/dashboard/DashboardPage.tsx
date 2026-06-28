@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Layers, Building2, Droplets, Plus } from "lucide-react";
-import { useStore } from "../../../hooks/useStore";
+import { toast } from "sonner";
 import { useAuth } from "../../../hooks/useAuth";
 import SearchBar from "../../shared/SearchBar";
 import DesignCard from "../../shared/DesignCard";
+import { getDashboardSummary, type DashboardSummary } from "../../../services/dashboardService";
+import { getDesignErrorMessage } from "../../../services/designsService";
 
 interface StatCardProps {
   label: string;
@@ -36,14 +39,34 @@ function StatCard({ label, value, icon: Icon, accent, to }: StatCardProps) {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { designs, companies, dyes, getCompanyById } = useStore();
   const { profile, user } = useAuth();
-  const firstName = (
-    profile?.owner_name ??
+  const [summary, setSummary] = useState<DashboardSummary>({
+    counts: { designs: 0, companies: 0, dyes: 0 },
+    recentDesigns: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  const greetingName = (
+    profile?.owner_name ||
+    profile?.business_name ||
     String(user?.user_metadata?.owner_name ?? user?.user_metadata?.ownerName ?? "Owner")
   ).trim().split(/\s+/)[0];
 
-  const recentDesigns = designs.slice(0, 6);
+  useEffect(() => {
+    async function loadDashboard() {
+      setLoading(true);
+      try {
+        setSummary(await getDashboardSummary());
+      } catch (error) {
+        toast.error(getDesignErrorMessage(error));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboard();
+  }, []);
+
   const today = new Date().toLocaleDateString("en-AE", {
     weekday: "long",
     year: "numeric",
@@ -63,8 +86,7 @@ export default function DashboardPage() {
       <div className="mb-6">
         <p className="text-xs text-gray-400 mb-0.5 leading-snug">{today}</p>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-          Good day, {firstName || "Owner"}{" "}
-          <span>👋</span>
+          Good day, {greetingName || "Owner"}
         </h1>
         <p className="text-gray-500 text-sm mt-0.5">Here's your design workspace at a glance.</p>
       </div>
@@ -74,11 +96,11 @@ export default function DashboardPage() {
         <SearchBar />
       </div>
 
-      {/* Stats — 3-col on all sizes, stacked vertically on very small */}
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <StatCard label="Designs" value={designs.length} icon={Layers} accent="#1a3461" to="/app/designs" />
-        <StatCard label="Companies" value={companies.length} icon={Building2} accent="#10b981" to="/app/companies" />
-        <StatCard label="Dyes" value={dyes.length} icon={Droplets} accent="#7c3aed" to="/app/dyes" />
+        <StatCard label="Designs" value={summary.counts.designs} icon={Layers} accent="#1a3461" to="/app/designs" />
+        <StatCard label="Companies" value={summary.counts.companies} icon={Building2} accent="#10b981" to="/app/companies" />
+        <StatCard label="Dyes" value={summary.counts.dyes} icon={Droplets} accent="#7c3aed" to="/app/dyes" />
       </div>
 
       {/* Quick Actions */}
@@ -116,7 +138,11 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {recentDesigns.length === 0 ? (
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-gray-100 py-14 flex flex-col items-center text-center px-6">
+            <p className="text-sm text-gray-500">Loading dashboard...</p>
+          </div>
+        ) : summary.recentDesigns.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 py-14 flex flex-col items-center text-center px-6">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ backgroundColor: "#1a346110" }}>
               <Layers className="w-5 h-5" style={{ color: "#1a3461" }} />
@@ -136,16 +162,13 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {recentDesigns.map((design) => {
-              const company = getCompanyById(design.companyId);
-              return (
-                <DesignCard
-                  key={design.id}
-                  design={design}
-                  companyName={company?.companyName}
-                />
-              );
-            })}
+            {summary.recentDesigns.map((design) => (
+              <DesignCard
+                key={design.id}
+                design={design}
+                companyName={design.companyName}
+              />
+            ))}
           </div>
         )}
       </div>

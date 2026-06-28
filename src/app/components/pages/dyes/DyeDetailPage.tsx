@@ -1,9 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Edit, Trash2, ChevronLeft, Images } from "lucide-react";
 import { toast } from "sonner";
-import { useStore } from "../../../hooks/useStore";
-import DesignCard from "../../shared/DesignCard";
 import ConfirmDialog from "../../shared/ConfirmDialog";
 import EmptyState from "../../shared/EmptyState";
 import ImageUpload from "../../shared/ImageUpload";
@@ -14,6 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../ui/dialog";
+import type { Dye } from "../../../types";
+import {
+  deleteDye,
+  getDyeById,
+  getDyeErrorMessage,
+  listDyes,
+  updateDye,
+} from "../../../services/dyesService";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -31,22 +37,59 @@ function inputCls(hasError?: boolean) {
 export default function DyeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getDyeById, getDesignsByDye, getCompanyById, deleteDye, updateDye, dyes } = useStore();
+  const [dye, setDye] = useState<Dye | null>(null);
+  const [dyes, setDyes] = useState<Dye[]>([]);
+  const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [editErrors, setEditErrors] = useState<Partial<Record<"dyeName" | "dyeNumber", string>>>({});
 
-  const dye = getDyeById(id ?? "");
-  const designs = getDesignsByDye(id ?? "");
-
   const [editForm, setEditForm] = useState({
-    dyeName: dye?.dyeName ?? "",
-    dyeNumber: dye?.dyeNumber ?? "",
-    description: dye?.description ?? "",
-    images: dye?.images ?? ([] as string[]),
-    coverImage: dye?.coverImage ?? "",
+    dyeName: "",
+    dyeNumber: "",
+    description: "",
+    images: [] as string[],
+    coverImage: "",
   });
+
+  const loadDye = async () => {
+    if (!id) {
+      setDye(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const [nextDye, nextDyes] = await Promise.all([
+        getDyeById(id),
+        listDyes(),
+      ]);
+      setDye(nextDye);
+      setDyes(nextDyes);
+      setActiveImg(0);
+    } catch (error) {
+      toast.error(getDyeErrorMessage(error));
+      setDye(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDye();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto p-5 md:p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
+          <p className="text-sm text-gray-500">Loading dye...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!dye) {
     return (
@@ -64,17 +107,20 @@ export default function DyeDetailPage() {
     );
   }
 
-  const dyeImages = dye.images ?? [];
-  const displayImages = dyeImages.length > 0
-    ? dyeImages
+  const displayImages = dye.images.length > 0
+    ? dye.images
     : dye.coverImage
       ? [dye.coverImage]
       : [];
 
-  const handleDelete = () => {
-    deleteDye(dye.id);
-    toast.success("Dye deleted.");
-    navigate("/app/dyes");
+  const handleDelete = async () => {
+    try {
+      await deleteDye(dye.id);
+      toast.success("Dye deleted.");
+      navigate("/app/dyes");
+    } catch (error) {
+      toast.error(getDyeErrorMessage(error));
+    }
   };
 
   const setEdit = (key: "dyeName" | "dyeNumber" | "description") =>
@@ -82,6 +128,40 @@ export default function DyeDetailPage() {
       setEditForm((prev) => ({ ...prev, [key]: e.target.value }));
       setEditErrors((p) => ({ ...p, [key]: undefined }));
     };
+
+  const handleSaveEdit = async () => {
+    const e: typeof editErrors = {};
+    if (!editForm.dyeName.trim()) e.dyeName = "Dye name is required.";
+    if (!editForm.dyeNumber.trim()) {
+      e.dyeNumber = "Dye number is required.";
+    } else {
+      const norm = editForm.dyeNumber.trim().toLowerCase();
+      const dup = dyes.find((d) => d.id !== dye.id && d.dyeNumber.toLowerCase() === norm);
+      if (dup) e.dyeNumber = `Dye number "${editForm.dyeNumber.trim()}" is already used. Choose a different number.`;
+    }
+    if (Object.keys(e).length) { setEditErrors(e); return; }
+
+    try {
+      const updated = await updateDye(
+        dye.id,
+        {
+          dyeName: editForm.dyeName,
+          dyeNumber: editForm.dyeNumber,
+          description: editForm.description,
+          coverImage: editForm.coverImage,
+        },
+        editForm.images
+      );
+      if (updated) setDye(updated);
+      setShowEdit(false);
+      setEditErrors({});
+      setActiveImg(0);
+      await loadDye();
+      toast.success("Dye updated.");
+    } catch (error) {
+      toast.error(getDyeErrorMessage(error));
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -118,7 +198,7 @@ export default function DyeDetailPage() {
             <div className="flex gap-2 p-3 bg-white border-t border-gray-100 overflow-x-auto">
               {displayImages.map((src, i) => (
                 <button
-                  key={i}
+                  key={src}
                   onClick={() => setActiveImg(i)}
                   className={`shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
                     i === activeImg ? "border-[#1a3461]" : "border-transparent"
@@ -191,33 +271,18 @@ export default function DyeDetailPage() {
               <span>Images</span>
               <span>{displayImages.length} photo{displayImages.length !== 1 ? "s" : ""}</span>
             </div>
-            <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>Used in</span>
-              <span style={{ color: "#1a3461", fontWeight: 500 }}>{designs.length} design{designs.length !== 1 ? "s" : ""}</span>
-            </div>
           </div>
 
           {/* Linked Designs */}
           <div className="border-t border-gray-100 pt-5">
             <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Designs using this dye ({designs.length})
+              Designs using this dye
             </h2>
-            {designs.length === 0 ? (
-              <EmptyState
-                icon={Layers}
-                title="No designs yet"
-                description="Designs linked to this dye will appear here."
-              />
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {designs.map((d) => {
-                  const company = getCompanyById(d.companyId);
-                  return (
-                    <DesignCard key={d.id} design={d} companyName={company?.companyName} />
-                  );
-                })}
-              </div>
-            )}
+            <EmptyState
+              icon={Layers}
+              title="Linked designs will appear here after designs are connected."
+              description="Dyes are now connected to Supabase. Designs will be connected in a later migration phase."
+            />
           </div>
         </div>
       </div>
@@ -263,22 +328,7 @@ export default function DyeDetailPage() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  const e: typeof editErrors = {};
-                  if (!editForm.dyeName.trim()) e.dyeName = "Dye name is required.";
-                  if (!editForm.dyeNumber.trim()) {
-                    e.dyeNumber = "Dye number is required.";
-                  } else {
-                    const norm = editForm.dyeNumber.trim().toLowerCase();
-                    const dup = dyes.find((d) => d.id !== dye.id && d.dyeNumber.toLowerCase() === norm);
-                    if (dup) e.dyeNumber = `Dye number "${editForm.dyeNumber.trim()}" is already used. Choose a different number.`;
-                  }
-                  if (Object.keys(e).length) { setEditErrors(e); return; }
-                  updateDye(dye.id, editForm);
-                  setShowEdit(false);
-                  setEditErrors({});
-                  toast.success("Dye updated.");
-                }}
+                onClick={handleSaveEdit}
                 className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium hover:opacity-90 transition-all"
                 style={{ backgroundColor: "#1a3461" }}
               >
