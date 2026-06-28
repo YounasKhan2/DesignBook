@@ -42,7 +42,7 @@ export default defineConfig({
         theme_color: '#1a3461',
         background_color: '#f4f6f9',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/start',
         scope: '/',
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },

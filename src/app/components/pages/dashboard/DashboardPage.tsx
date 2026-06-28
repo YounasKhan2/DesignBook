@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Layers, Building2, Droplets, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../../hooks/useAuth";
 import SearchBar from "../../shared/SearchBar";
 import DesignCard from "../../shared/DesignCard";
-import { getDashboardSummary, type DashboardSummary } from "../../../services/dashboardService";
 import { getDesignErrorMessage } from "../../../services/designsService";
+import { useDashboardSummary } from "../../../hooks/useCatalogQueries";
 
 interface StatCardProps {
   label: string;
@@ -40,11 +40,10 @@ function StatCard({ label, value, icon: Icon, accent, to }: StatCardProps) {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
-  const [summary, setSummary] = useState<DashboardSummary>({
+  const { data: summary = {
     counts: { designs: 0, companies: 0, dyes: 0 },
     recentDesigns: [],
-  });
-  const [loading, setLoading] = useState(true);
+  }, isLoading: loading, isError, error } = useDashboardSummary();
 
   const greetingName = (
     profile?.owner_name ||
@@ -53,19 +52,8 @@ export default function DashboardPage() {
   ).trim().split(/\s+/)[0];
 
   useEffect(() => {
-    async function loadDashboard() {
-      setLoading(true);
-      try {
-        setSummary(await getDashboardSummary());
-      } catch (error) {
-        toast.error(getDesignErrorMessage(error));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadDashboard();
-  }, []);
+    if (isError) toast.error(getDesignErrorMessage(error));
+  }, [error, isError]);
 
   const today = new Date().toLocaleDateString("en-AE", {
     weekday: "long",

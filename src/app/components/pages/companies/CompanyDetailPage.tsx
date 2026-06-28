@@ -13,12 +13,9 @@ import {
 } from "../../ui/dialog";
 import type { Company } from "../../../types";
 import {
-  deleteCompany,
-  getCompanyById,
   getCompanyErrorMessage,
-  listCompanies,
-  updateCompany,
 } from "../../../services/companiesService";
+import { useCompanies, useCompany, useDeleteCompany, useUpdateCompany } from "../../../hooks/useCatalogQueries";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -36,9 +33,10 @@ function inputCls(hasError?: boolean) {
 export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [company, setCompany] = useState<Company | null>(null);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: company = null, isLoading: companyLoading, isError, error } = useCompany(id);
+  const { data: companies = [] } = useCompanies();
+  const updateCompanyMutation = useUpdateCompany();
+  const deleteCompanyMutation = useDeleteCompany();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editErrors, setEditErrors] = useState<Partial<Record<"companyName" | "companyNumber", string>>>({});
@@ -51,34 +49,11 @@ export default function CompanyDetailPage() {
     notes: "",
   });
 
-  const loadCompany = async () => {
-    if (!id) {
-      setCompany(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const [nextCompany, nextCompanies] = await Promise.all([
-        getCompanyById(id),
-        listCompanies(),
-      ]);
-      setCompany(nextCompany);
-      setCompanies(nextCompanies);
-    } catch (error) {
-      toast.error(getCompanyErrorMessage(error));
-      setCompany(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadCompany();
-  }, [id]);
+    if (isError) toast.error(getCompanyErrorMessage(error));
+  }, [error, isError]);
 
-  if (loading) {
+  if (companyLoading) {
     return (
       <div className="p-5 md:p-8 max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
@@ -108,7 +83,7 @@ export default function CompanyDetailPage() {
 
   const handleDelete = async () => {
     try {
-      await deleteCompany(company.id);
+      await deleteCompanyMutation.mutateAsync(company.id);
       toast.success("Company deleted.");
       navigate("/app/companies");
     } catch (error) {
@@ -128,9 +103,7 @@ export default function CompanyDetailPage() {
     }
     if (Object.keys(e).length) { setEditErrors(e); return; }
     try {
-      const updated = await updateCompany(company.id, editForm);
-      setCompany(updated);
-      setCompanies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      await updateCompanyMutation.mutateAsync({ id: company.id, input: editForm });
       setShowEdit(false);
       setEditErrors({});
       toast.success("Company updated.");

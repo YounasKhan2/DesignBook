@@ -4,48 +4,28 @@ import { Plus, SlidersHorizontal, X } from "lucide-react";
 import DesignCard from "../../shared/DesignCard";
 import EmptyState from "../../shared/EmptyState";
 import { Layers } from "lucide-react";
-import { listCompanies } from "../../../services/companiesService";
-import { listDyes } from "../../../services/dyesService";
 import {
   companyNameForDesign,
   getDesignErrorMessage,
-  listDesigns,
-  type DesignWithRelations,
 } from "../../../services/designsService";
-import type { Company, Dye } from "../../../types";
 import { toast } from "sonner";
+import { useCompanies, useDesigns, useDyes } from "../../../hooks/useCatalogQueries";
 
 export default function DesignsGalleryPage() {
   const navigate = useNavigate();
-  const [designs, setDesigns] = useState<DesignWithRelations[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [dyes, setDyes] = useState<Dye[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: designs = [], isLoading: designsLoading, isError: designsError, error: designsLoadError } = useDesigns();
+  const { data: companies = [], isLoading: companiesLoading, isError: companiesError, error: companiesLoadError } = useCompanies();
+  const { data: dyes = [], isLoading: dyesLoading, isError: dyesError, error: dyesLoadError } = useDyes();
   const [search, setSearch] = useState("");
   const [filterCompany, setFilterCompany] = useState("");
   const [filterDye, setFilterDye] = useState("");
+  const loading = designsLoading || companiesLoading || dyesLoading;
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [nextDesigns, nextCompanies, nextDyes] = await Promise.all([
-          listDesigns(),
-          listCompanies(),
-          listDyes(),
-        ]);
-        setDesigns(nextDesigns);
-        setCompanies(nextCompanies);
-        setDyes(nextDyes);
-      } catch (error) {
-        toast.error(getDesignErrorMessage(error));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    load();
-  }, []);
+    if (designsError) toast.error(getDesignErrorMessage(designsLoadError));
+    if (companiesError) toast.error("Unable to load companies.");
+    if (dyesError) toast.error("Unable to load dyes.");
+  }, [companiesError, designsError, designsLoadError, dyesError]);
 
   const filtered = useMemo(() => {
     return designs.filter((d) => {

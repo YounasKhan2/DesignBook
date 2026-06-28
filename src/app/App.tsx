@@ -1,7 +1,9 @@
 import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation } from "react-router";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import PWAInstallBanner from "./components/shared/PWAInstallBanner";
+import { queryClient } from "./lib/queryClient";
 
 import LandingPage from "./components/pages/landing/LandingPage";
 import LoginPage from "./components/pages/auth/LoginPage";
@@ -52,12 +54,20 @@ function GuestRoute() {
   return <Outlet />;
 }
 
+function StartRoute() {
+  const { session, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+  return <Navigate to={session ? "/app" : "/"} replace />;
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
     Component: PublicLayout,
     children: [
       { index: true, Component: LandingPage },
+      { path: "start", Component: StartRoute },
       {
         Component: GuestRoute,
         children: [
@@ -90,9 +100,11 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
-      <PWAInstallBanner />
-      <Toaster position="top-right" richColors />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <PWAInstallBanner />
+        <Toaster position="top-right" richColors />
+      </QueryClientProvider>
     </AuthProvider>
   );
 }

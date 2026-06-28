@@ -15,12 +15,9 @@ import {
 } from "../../ui/dialog";
 import type { Dye } from "../../../types";
 import {
-  deleteDye,
-  getDyeById,
   getDyeErrorMessage,
-  listDyes,
-  updateDye,
 } from "../../../services/dyesService";
+import { useDeleteDye, useDye, useDyes, useUpdateDye } from "../../../hooks/useCatalogQueries";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -38,9 +35,10 @@ function inputCls(hasError?: boolean) {
 export default function DyeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [dye, setDye] = useState<Dye | null>(null);
-  const [dyes, setDyes] = useState<Dye[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: dye = null, isLoading: loading, isError, error } = useDye(id);
+  const { data: dyes = [] } = useDyes();
+  const updateDyeMutation = useUpdateDye();
+  const deleteDyeMutation = useDeleteDye();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
@@ -55,33 +53,13 @@ export default function DyeDetailPage() {
     coverImage: "",
   });
 
-  const loadDye = async () => {
-    if (!id) {
-      setDye(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const [nextDye, nextDyes] = await Promise.all([
-        getDyeById(id),
-        listDyes(),
-      ]);
-      setDye(nextDye);
-      setDyes(nextDyes);
-      setActiveImg(0);
-    } catch (error) {
-      toast.error(getDyeErrorMessage(error));
-      setDye(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    setActiveImg(0);
+  }, [id]);
 
   useEffect(() => {
-    loadDye();
-  }, [id]);
+    if (isError) toast.error(getDyeErrorMessage(error));
+  }, [error, isError]);
 
   if (loading) {
     return (
@@ -123,7 +101,7 @@ export default function DyeDetailPage() {
 
   const handleDelete = async () => {
     try {
-      await deleteDye(dye.id);
+      await deleteDyeMutation.mutateAsync(dye.id);
       toast.success("Dye deleted.");
       navigate("/app/dyes");
     } catch (error) {
@@ -182,21 +160,19 @@ export default function DyeDetailPage() {
     if (Object.keys(e).length) { setEditErrors(e); return; }
 
     try {
-      const updated = await updateDye(
-        dye.id,
-        {
+      await updateDyeMutation.mutateAsync({
+        id: dye.id,
+        input: {
           dyeName: editForm.dyeName,
           dyeNumber: editForm.dyeNumber,
           description: editForm.description,
           coverImage: editForm.coverImage,
         },
-        editForm.images
-      );
-      if (updated) setDye(updated);
+        images: editForm.images,
+      });
       setShowEdit(false);
       setEditErrors({});
       setActiveImg(0);
-      await loadDye();
       toast.success("Dye updated.");
     } catch (error) {
       toast.error(getDyeErrorMessage(error));

@@ -11,11 +11,10 @@ import {
 } from "../../ui/dialog";
 import type { Company } from "../../../types";
 import {
-  createCompany,
   getCompanyErrorMessage,
-  listCompanies,
   type CompanyInput,
 } from "../../../services/companiesService";
+import { useCompanies, useCreateCompany } from "../../../hooks/useCatalogQueries";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -114,25 +113,14 @@ function CompanyForm({
 }
 
 export default function CompaniesPage() {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: companies = [], isLoading, isError, error } = useCompanies();
+  const createCompanyMutation = useCreateCompany();
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
 
-  const loadCompanies = async () => {
-    setLoading(true);
-    try {
-      setCompanies(await listCompanies());
-    } catch (error) {
-      toast.error(getCompanyErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadCompanies();
-  }, []);
+    if (isError) toast.error(getCompanyErrorMessage(error));
+  }, [error, isError]);
 
   const filtered = useMemo(
     () => companies.filter(
@@ -171,7 +159,7 @@ export default function CompaniesPage() {
         />
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
           <p className="text-sm text-gray-500">Loading companies...</p>
         </div>
@@ -214,9 +202,8 @@ export default function CompaniesPage() {
             existingCompanies={companies}
             onSave={async (data) => {
               try {
-                await createCompany(data);
+                await createCompanyMutation.mutateAsync(data);
                 setShowAdd(false);
-                await loadCompanies();
                 toast.success("Company added.");
               } catch (error) {
                 toast.error(getCompanyErrorMessage(error));

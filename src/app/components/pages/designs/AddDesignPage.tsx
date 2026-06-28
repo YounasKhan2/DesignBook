@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -10,9 +10,17 @@ import {
   DialogTitle,
 } from "../../ui/dialog";
 import type { Company, Dye } from "../../../types";
-import { createCompany, getCompanyErrorMessage, listCompanies } from "../../../services/companiesService";
-import { createDye, getDyeErrorMessage, listDyes } from "../../../services/dyesService";
-import { createDesign, getDesignErrorMessage, listDesigns } from "../../../services/designsService";
+import { getCompanyErrorMessage } from "../../../services/companiesService";
+import { getDyeErrorMessage } from "../../../services/dyesService";
+import { getDesignErrorMessage } from "../../../services/designsService";
+import {
+  useCompanies,
+  useCreateCompany,
+  useCreateDesign,
+  useCreateDye,
+  useDesigns,
+  useDyes,
+} from "../../../hooks/useCatalogQueries";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -46,6 +54,7 @@ function QuickAddCompany({
   onClose: () => void;
   onSaved: (company: Company) => void;
 }) {
+  const createCompanyMutation = useCreateCompany();
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [errors, setErrors] = useState<{ name?: string; number?: string }>({});
@@ -65,7 +74,7 @@ function QuickAddCompany({
     if (Object.keys(e).length) { setErrors(e); return; }
 
     try {
-      const company = await createCompany({ companyName: name.trim(), companyNumber: number.trim() });
+      const company = await createCompanyMutation.mutateAsync({ companyName: name.trim(), companyNumber: number.trim() });
       toast.success("Company added.");
       reset();
       onSaved(company);
@@ -118,6 +127,7 @@ function QuickAddDye({
   onClose: () => void;
   onSaved: (dye: Dye) => void;
 }) {
+  const createDyeMutation = useCreateDye();
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [errors, setErrors] = useState<{ name?: string; number?: string }>({});
@@ -137,7 +147,10 @@ function QuickAddDye({
     if (Object.keys(e).length) { setErrors(e); return; }
 
     try {
-      const dye = await createDye({ dyeName: name.trim(), dyeNumber: number.trim(), coverImage: "" }, []);
+      const dye = await createDyeMutation.mutateAsync({
+        input: { dyeName: name.trim(), dyeNumber: number.trim(), coverImage: "" },
+        images: [],
+      });
       if (!dye) return;
       toast.success("Dye added.");
       reset();
@@ -184,14 +197,16 @@ type FormErrors = Partial<Record<"designName" | "designNumber" | "companyId" | "
 
 export default function AddDesignPage() {
   const navigate = useNavigate();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [dyes, setDyes] = useState<Dye[]>([]);
-  const [existingDesigns, setExistingDesigns] = useState<{ id: string; designNumber: string }[]>([]);
+  const { data: companies = [], isLoading: companiesLoading, isError: companiesError, error: companiesLoadError } = useCompanies();
+  const { data: dyes = [], isLoading: dyesLoading, isError: dyesError, error: dyesLoadError } = useDyes();
+  const { data: designs = [], isLoading: designsLoading, isError: designsError, error: designsLoadError } = useDesigns();
+  const createDesignMutation = useCreateDesign();
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [showAddDye, setShowAddDye] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const loading = companiesLoading || dyesLoading || designsLoading;
+  const suggestedNumberApplied = useRef(false);
 
   const [form, setForm] = useState({
     designName: "",
@@ -204,30 +219,20 @@ export default function AddDesignPage() {
   const [coverImage, setCoverImage] = useState("");
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [nextCompanies, nextDyes, nextDesigns] = await Promise.all([
-          listCompanies(),
-          listDyes(),
-          listDesigns(),
-        ]);
-        setCompanies(nextCompanies);
-        setDyes(nextDyes);
-        setExistingDesigns(nextDesigns.map((d) => ({ id: d.id, designNumber: d.designNumber })));
-        setForm((prev) => ({
-          ...prev,
-          designNumber: `DSN-${String(nextDesigns.length + 1).padStart(3, "0")}`,
-        }));
-      } catch (error) {
-        toast.error(getDesignErrorMessage(error));
-      } finally {
-        setLoading(false);
-      }
-    }
+    if (companiesError) toast.error(getCompanyErrorMessage(companiesLoadError));
+    if (dyesError) toast.error(getDyeErrorMessage(dyesLoadError));
+    if (designsError) toast.error(getDesignErrorMessage(designsLoadError));
+  }, [companiesError, companiesLoadError, designsError, designsLoadError, dyesError, dyesLoadError]);
 
-    load();
-  }, []);
+  useEffect(() => {
+    if (!loading && !suggestedNumberApplied.current) {
+      suggestedNumberApplied.current = true;
+      setForm((prev) => ({
+        ...prev,
+        designNumber: `DSN-${String(designs.length + 1).padStart(3, "0")}`,
+      }));
+    }
+  }, [designs.length, loading]);
 
   const set = (key: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -246,7 +251,7 @@ export default function AddDesignPage() {
     if (!trimNum) {
       e.designNumber = "Design number is required.";
     } else {
-      const dup = existingDesigns.find((d) => d.designNumber.trim().toLowerCase() === trimNum.toLowerCase());
+      const dup = designs.find((d) => d.designNumber.trim().toLowerCase() === trimNum.toLowerCase());
       if (dup) e.designNumber = `Design number "${trimNum}" is already used. Choose a different number.`;
     }
 
@@ -262,10 +267,13 @@ export default function AddDesignPage() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setSaving(true);
     try {
-      const design = await createDesign({
-        ...form,
-        coverImage: coverImage || images[0] || "",
-      }, images);
+      const design = await createDesignMutation.mutateAsync({
+        input: {
+          ...form,
+          coverImage: coverImage || images[0] || "",
+        },
+        images,
+      });
       toast.success("Design saved successfully.");
       navigate(`/app/designs/${design?.id}`);
     } catch (error) {
@@ -361,7 +369,6 @@ export default function AddDesignPage() {
         companies={companies}
         onClose={() => setShowAddCompany(false)}
         onSaved={(company) => {
-          setCompanies((prev) => [company, ...prev]);
           setForm((prev) => ({ ...prev, companyId: company.id }));
           setErrors((p) => ({ ...p, companyId: undefined }));
           setShowAddCompany(false);
@@ -372,7 +379,6 @@ export default function AddDesignPage() {
         dyes={dyes}
         onClose={() => setShowAddDye(false)}
         onSaved={(dye) => {
-          setDyes((prev) => [dye, ...prev]);
           setForm((prev) => ({ ...prev, dyeId: dye.id }));
           setErrors((p) => ({ ...p, dye: undefined }));
           setShowAddDye(false);

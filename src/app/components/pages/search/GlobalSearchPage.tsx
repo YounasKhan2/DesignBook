@@ -3,32 +3,19 @@ import { useNavigate } from "react-router";
 import { Search, Layers, Building2, Droplets, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import {
-  loadSearchIndex,
   searchIndex,
-  type SearchIndex,
 } from "../../../services/searchService";
 import { getDesignErrorMessage } from "../../../services/designsService";
+import { useSearchIndex } from "../../../hooks/useCatalogQueries";
 
 export default function GlobalSearchPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [index, setIndex] = useState<SearchIndex>({ designs: [], companies: [], dyes: [] });
-  const [loading, setLoading] = useState(true);
+  const { data: index = { designs: [], companies: [], dyes: [] }, isLoading: loading, isError, error } = useSearchIndex();
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        setIndex(await loadSearchIndex());
-      } catch (error) {
-        toast.error(getDesignErrorMessage(error));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    load();
-  }, []);
+    if (isError) toast.error(getDesignErrorMessage(error));
+  }, [error, isError]);
 
   const q = query.toLowerCase().trim();
   const results = useMemo(() => searchIndex(index, query), [index, query]);

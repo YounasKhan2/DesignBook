@@ -3,16 +3,10 @@ import { useParams, useNavigate } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import ImageUpload from "../../shared/ImageUpload";
-import type { Company, Dye } from "../../../types";
-import { listCompanies } from "../../../services/companiesService";
-import { listDyes } from "../../../services/dyesService";
 import {
-  getDesignById,
   getDesignErrorMessage,
-  listDesigns,
-  updateDesign,
-  type DesignWithRelations,
 } from "../../../services/designsService";
+import { useCompanies, useDesign, useDesigns, useDyes, useUpdateDesign } from "../../../hooks/useCatalogQueries";
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
@@ -40,11 +34,12 @@ type FormErrors = Partial<Record<"designName" | "designNumber" | "companyId" | "
 export default function EditDesignPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [design, setDesign] = useState<DesignWithRelations | null>(null);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [dyes, setDyes] = useState<Dye[]>([]);
-  const [existingDesigns, setExistingDesigns] = useState<{ id: string; designNumber: string }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: design = null, isLoading: designLoading, isError: designError, error: designLoadError } = useDesign(id);
+  const { data: companies = [], isLoading: companiesLoading, isError: companiesError } = useCompanies();
+  const { data: dyes = [], isLoading: dyesLoading, isError: dyesError } = useDyes();
+  const { data: existingDesigns = [], isLoading: designsLoading, isError: designsError } = useDesigns();
+  const updateDesignMutation = useUpdateDesign();
+  const loading = designLoading || companiesLoading || dyesLoading || designsLoading;
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -59,43 +54,25 @@ export default function EditDesignPage() {
   const [coverImage, setCoverImage] = useState("");
 
   useEffect(() => {
-    async function load() {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const [nextDesign, nextCompanies, nextDyes, nextDesigns] = await Promise.all([
-          getDesignById(id),
-          listCompanies(),
-          listDyes(),
-          listDesigns(),
-        ]);
-        setDesign(nextDesign);
-        setCompanies(nextCompanies);
-        setDyes(nextDyes);
-        setExistingDesigns(nextDesigns.map((d) => ({ id: d.id, designNumber: d.designNumber })));
-        if (nextDesign) {
-          setForm({
-            designName: nextDesign.designName,
-            designNumber: nextDesign.designNumber,
-            companyId: nextDesign.companyId,
-            dyeId: nextDesign.dyeId,
-            description: nextDesign.description,
-          });
-          setImages(nextDesign.images);
-          setCoverImage(nextDesign.coverImage);
-        }
-      } catch (error) {
-        toast.error(getDesignErrorMessage(error));
-      } finally {
-        setLoading(false);
-      }
+    if (design) {
+      setForm({
+        designName: design.designName,
+        designNumber: design.designNumber,
+        companyId: design.companyId,
+        dyeId: design.dyeId,
+        description: design.description,
+      });
+      setImages(design.images);
+      setCoverImage(design.coverImage);
     }
+  }, [design]);
 
-    load();
-  }, [id]);
+  useEffect(() => {
+    if (designError) toast.error(getDesignErrorMessage(designLoadError));
+    if (companiesError) toast.error("Unable to load companies.");
+    if (dyesError) toast.error("Unable to load dyes.");
+    if (designsError) toast.error("Unable to load designs.");
+  }, [companiesError, designError, designLoadError, designsError, dyesError]);
 
   if (loading) {
     return (
@@ -158,10 +135,14 @@ export default function EditDesignPage() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setSaving(true);
     try {
-      const updated = await updateDesign(design.id, {
-        ...form,
-        coverImage: coverImage || images[0] || "",
-      }, images);
+      const updated = await updateDesignMutation.mutateAsync({
+        id: design.id,
+        input: {
+          ...form,
+          coverImage: coverImage || images[0] || "",
+        },
+        images,
+      });
       toast.success("Design updated successfully.");
       navigate(`/app/designs/${updated?.id ?? design.id}`);
     } catch (error) {

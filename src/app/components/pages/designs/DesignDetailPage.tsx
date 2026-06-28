@@ -3,59 +3,32 @@ import { useParams, useNavigate } from "react-router";
 import { Download, Edit, ExternalLink, Trash2, Building2, Droplets, ChevronLeft, Images } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmDialog from "../../shared/ConfirmDialog";
-import type { Company, Dye } from "../../../types";
-import { getCompanyById } from "../../../services/companiesService";
-import { getDyeById } from "../../../services/dyesService";
 import { downloadPrivateImage, openPrivateImage } from "../../../services/imageDownloadService";
 import {
-  deleteDesign,
-  getDesignById,
   getDesignErrorMessage,
-  type DesignWithRelations,
 } from "../../../services/designsService";
+import { useCompany, useDeleteDesign, useDesign, useDye } from "../../../hooks/useCatalogQueries";
 
 export default function DesignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [design, setDesign] = useState<DesignWithRelations | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
-  const [dye, setDye] = useState<Dye | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: design = null, isLoading: designLoading, isError, error } = useDesign(id);
+  const { data: company = null } = useCompany(design?.companyId);
+  const { data: dye = null } = useDye(design?.dyeId);
+  const deleteDesignMutation = useDeleteDesign();
   const [activeImg, setActiveImg] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [imageAction, setImageAction] = useState<string | null>(null);
 
   useEffect(() => {
-    async function load() {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const nextDesign = await getDesignById(id);
-        setDesign(nextDesign);
-        setActiveImg(0);
-        if (nextDesign) {
-          const [nextCompany, nextDye] = await Promise.all([
-            getCompanyById(nextDesign.companyId),
-            getDyeById(nextDesign.dyeId),
-          ]);
-          setCompany(nextCompany);
-          setDye(nextDye);
-        }
-      } catch (error) {
-        toast.error(getDesignErrorMessage(error));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    load();
+    setActiveImg(0);
   }, [id]);
 
-  if (loading) {
+  useEffect(() => {
+    if (isError) toast.error(getDesignErrorMessage(error));
+  }, [error, isError]);
+
+  if (designLoading) {
     return (
       <div className="max-w-5xl mx-auto p-5 md:p-8">
         <div className="bg-white rounded-2xl border border-gray-100 py-14 text-center">
@@ -95,7 +68,7 @@ export default function DesignDetailPage() {
 
   const handleDelete = async () => {
     try {
-      await deleteDesign(design.id);
+      await deleteDesignMutation.mutateAsync(design.id);
       toast.success("Design deleted.");
       navigate("/app/designs");
     } catch (error) {
