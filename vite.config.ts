@@ -26,6 +26,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      cleanupOutdatedCaches: true,
       includeAssets: [
         'favicon.ico',
         'apple-touch-icon.png',
@@ -51,9 +52,19 @@ export default defineConfig({
         ],
       },
       workbox: {
+        clientsClaim: true,
+        skipWaiting: true,
         navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        runtimeCaching: [],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*$/,
+            handler: 'NetworkOnly',
+            options: {
+              cacheName: 'supabase-network-only',
+            },
+          },
+        ],
       },
     }),
   ],

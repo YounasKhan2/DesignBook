@@ -15,6 +15,7 @@ export const supabase = supabaseConfigError
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storage: window.localStorage,
       },
     });
 
