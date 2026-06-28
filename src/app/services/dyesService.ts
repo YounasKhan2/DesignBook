@@ -135,6 +135,7 @@ async function rowsToDye(row: DyeRow, imageRows: DyeImageRow[]) {
   const sortedImages = [...imageRows].sort((a, b) => a.sort_order - b.sort_order);
   const signedUrls = await signedUrlsByPath(sortedImages.map((img) => img.storage_path));
   const images = sortedImages.map((img) => signedUrls.get(img.storage_path) || img.image_url).filter(Boolean);
+  const imagePaths = sortedImages.map((img) => img.storage_path);
   const coverRow = sortedImages.find((img) => img.is_cover) ?? sortedImages[0];
   const coverImage = coverRow ? signedUrls.get(coverRow.storage_path) || coverRow.image_url : "";
 
@@ -145,6 +146,8 @@ async function rowsToDye(row: DyeRow, imageRows: DyeImageRow[]) {
     description: row.description ?? undefined,
     images,
     coverImage,
+    imagePaths,
+    coverImagePath: coverRow?.storage_path,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   } satisfies Dye;

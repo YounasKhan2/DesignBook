@@ -27,6 +27,7 @@ export default function SettingsPage() {
   const [savingPass, setSavingPass] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "password" | "pwa">("profile");
+  const [isPwaInstalled, setIsPwaInstalled] = useState(false);
 
   useEffect(() => {
     setProfile({
@@ -39,6 +40,20 @@ export default function SettingsPage() {
       email: authProfile?.email ?? user?.email ?? "",
     });
   }, [authProfile, user]);
+
+  useEffect(() => {
+    const displayMode = window.matchMedia("(display-mode: standalone)");
+    const updateInstallStatus = () => {
+      setIsPwaInstalled(
+        displayMode.matches ||
+        Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+      );
+    };
+
+    updateInstallStatus();
+    displayMode.addEventListener("change", updateInstallStatus);
+    return () => displayMode.removeEventListener("change", updateInstallStatus);
+  }, []);
 
   const setP = (key: keyof typeof profile) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setProfile((prev) => ({ ...prev, [key]: e.target.value }));
@@ -291,17 +306,40 @@ export default function SettingsPage() {
             </div>
             <div>
               <h2 className="font-semibold text-gray-900">Install DesignBook</h2>
-              <p className="text-sm text-gray-500">Add to your home screen for quick access</p>
+              <p className="text-sm text-gray-500">Add to your home screen or desktop for quick access</p>
             </div>
           </div>
 
           <div className="space-y-4 text-sm text-gray-600">
+            <div className="bg-[#1a3461]/5 rounded-xl p-4">
+              <p className="font-medium text-gray-800 mb-1">App readiness</p>
+              <p className="text-gray-500">
+                {isPwaInstalled
+                  ? "DesignBook is currently running as an installed app."
+                  : "DesignBook is ready to install when your browser shows the install option."}
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="font-medium text-gray-800 mb-1">Quick access</p>
+                <p className="text-xs text-gray-500">Launch from your home screen, dock, or desktop.</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="font-medium text-gray-800 mb-1">Focused window</p>
+                <p className="text-xs text-gray-500">Use DesignBook in a clean standalone app view.</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="font-medium text-gray-800 mb-1">Private data</p>
+                <p className="text-xs text-gray-500">Your catalog still loads securely from Supabase.</p>
+              </div>
+            </div>
+
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="font-medium text-gray-800 mb-2">On iPhone / iPad (Safari)</p>
               <ol className="space-y-1.5 list-decimal list-inside text-gray-500">
                 <li>Open DesignBook in Safari</li>
-                <li>Tap the Share button at the bottom</li>
-                <li>Scroll down and tap "Add to Home Screen"</li>
+                <li>Tap Share, then Add to Home Screen</li>
                 <li>Tap "Add" in the top-right corner</li>
               </ol>
             </div>
@@ -310,9 +348,9 @@ export default function SettingsPage() {
               <p className="font-medium text-gray-800 mb-2">On Android (Chrome)</p>
               <ol className="space-y-1.5 list-decimal list-inside text-gray-500">
                 <li>Open DesignBook in Chrome</li>
-                <li>Tap the three-dot menu in the top-right</li>
-                <li>Tap "Add to Home screen"</li>
-                <li>Confirm by tapping "Add"</li>
+                <li>Tap Install App when the install prompt appears</li>
+                <li>If needed, use the three-dot menu and tap "Install app"</li>
+                <li>Confirm by tapping "Install"</li>
               </ol>
             </div>
 
@@ -320,13 +358,13 @@ export default function SettingsPage() {
               <p className="font-medium text-gray-800 mb-2">On Desktop (Chrome / Edge)</p>
               <ol className="space-y-1.5 list-decimal list-inside text-gray-500">
                 <li>Look for the install icon in the address bar</li>
-                <li>Click "Install DesignBook"</li>
+                <li>Use the install banner or click "Install DesignBook"</li>
                 <li>The app will open in its own window</li>
               </ol>
             </div>
 
             <p className="text-xs text-gray-400 text-center pt-2">
-              DesignBook works offline once installed on your device.
+              DesignBook is online-first and does not cache private catalog data for offline use.
             </p>
           </div>
         </div>

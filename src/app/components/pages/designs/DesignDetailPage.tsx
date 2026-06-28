@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Edit, Trash2, Building2, Droplets, ChevronLeft, Images } from "lucide-react";
+import { Download, Edit, ExternalLink, Trash2, Building2, Droplets, ChevronLeft, Images } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmDialog from "../../shared/ConfirmDialog";
 import type { Company, Dye } from "../../../types";
 import { getCompanyById } from "../../../services/companiesService";
 import { getDyeById } from "../../../services/dyesService";
+import { downloadPrivateImage, openPrivateImage } from "../../../services/imageDownloadService";
 import {
   deleteDesign,
   getDesignById,
@@ -22,6 +23,7 @@ export default function DesignDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [imageAction, setImageAction] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -84,6 +86,12 @@ export default function DesignDetailPage() {
     : design.coverImage
       ? [design.coverImage]
       : [];
+  const displayImagePaths = design.imagePaths && design.imagePaths.length > 0
+    ? design.imagePaths
+    : design.coverImagePath
+      ? [design.coverImagePath]
+      : [];
+  const activeImagePath = displayImagePaths[activeImg] ?? displayImagePaths[0];
 
   const handleDelete = async () => {
     try {
@@ -92,6 +100,38 @@ export default function DesignDetailPage() {
       navigate("/app/designs");
     } catch (error) {
       toast.error(getDesignErrorMessage(error));
+    }
+  };
+
+  const handleDownloadImage = async (storagePath: string | undefined, filenameBase: string, actionKey: string) => {
+    if (!storagePath) {
+      toast.error("Could not download image. Please try again.");
+      return;
+    }
+
+    setImageAction(actionKey);
+    try {
+      await downloadPrivateImage(storagePath, filenameBase);
+    } catch {
+      toast.error("Could not download image. Please try again.");
+    } finally {
+      setImageAction(null);
+    }
+  };
+
+  const handleOpenImage = async (storagePath: string | undefined, actionKey: string) => {
+    if (!storagePath) {
+      toast.error("Could not open image. Please try again.");
+      return;
+    }
+
+    setImageAction(actionKey);
+    try {
+      await openPrivateImage(storagePath);
+    } catch {
+      toast.error("Could not open image. Please try again.");
+    } finally {
+      setImageAction(null);
     }
   };
 
@@ -116,6 +156,35 @@ export default function DesignDetailPage() {
               </div>
             )}
 
+            {activeImagePath && (
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenImage(activeImagePath, "open-active")}
+                  disabled={!!imageAction}
+                  aria-label="Open full image"
+                  className="w-10 h-10 rounded-xl bg-white/90 text-gray-700 shadow-sm backdrop-blur flex items-center justify-center hover:bg-white disabled:opacity-60"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDownloadImage(activeImagePath, `design-${design.designNumber}-image-${activeImg + 1}`, "download-active")}
+                  disabled={!!imageAction}
+                  aria-label="Download image"
+                  className="w-10 h-10 rounded-xl bg-white/90 text-gray-700 shadow-sm backdrop-blur flex items-center justify-center hover:bg-white disabled:opacity-60"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {imageAction && (
+              <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur">
+                Preparing image...
+              </div>
+            )}
+
             {displayImages.length > 1 && (
               <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur">
                 {activeImg + 1} / {displayImages.length}
@@ -126,22 +195,46 @@ export default function DesignDetailPage() {
           {displayImages.length > 1 && (
             <div className="flex gap-2 p-3 bg-white border-t border-gray-100 overflow-x-auto">
               {displayImages.map((src, i) => (
-                <button
-                  key={src}
-                  onClick={() => setActiveImg(i)}
-                  className={`shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
-                    i === activeImg ? "border-[#1a3461]" : "border-transparent"
-                  }`}
-                >
-                  <img
-                    src={src}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </button>
+                <div key={src} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveImg(i)}
+                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
+                      i === activeImg ? "border-[#1a3461]" : "border-transparent"
+                    }`}
+                  >
+                    <img
+                      src={src}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </button>
+                  {displayImagePaths[i] && (
+                    <div className="flex justify-center gap-1 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenImage(displayImagePaths[i], `open-${i}`)}
+                        disabled={!!imageAction}
+                        aria-label={`Open design image ${i + 1}`}
+                        className="w-6 h-6 rounded-md bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 disabled:opacity-60"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadImage(displayImagePaths[i], `design-${design.designNumber}-image-${i + 1}`, `download-${i}`)}
+                        disabled={!!imageAction}
+                        aria-label={`Download design image ${i + 1}`}
+                        className="w-6 h-6 rounded-md bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 disabled:opacity-60"
+                      >
+                        <Download className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -174,6 +267,17 @@ export default function DesignDetailPage() {
                 Delete
               </button>
             </div>
+            {design.coverImagePath && (
+              <button
+                type="button"
+                onClick={() => handleDownloadImage(design.coverImagePath, `design-${design.designNumber}-cover`, "download-cover")}
+                disabled={!!imageAction}
+                className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all disabled:opacity-60"
+              >
+                <Download className="w-4 h-4" />
+                {imageAction === "download-cover" ? "Preparing image..." : "Download Cover Image"}
+              </button>
+            )}
           </div>
 
           <div className="space-y-4">

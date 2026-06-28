@@ -9,6 +9,8 @@ export interface Design {
   description: string;
   images: string[];
   coverImage: string;
+  imagePaths?: string[];
+  coverImagePath?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,6 +33,8 @@ export interface Dye {
   description?: string;
   images: string[];
   coverImage: string;
+  imagePaths?: string[];
+  coverImagePath?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation } from "react-router";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import PWAInstallBanner from "./components/shared/PWAInstallBanner";
 
 import LandingPage from "./components/pages/landing/LandingPage";
 import LoginPage from "./components/pages/auth/LoginPage";
@@ -90,6 +91,7 @@ export default function App() {
   return (
     <AuthProvider>
       <RouterProvider router={router} />
+      <PWAInstallBanner />
       <Toaster position="top-right" richColors />
     </AuthProvider>
   );
